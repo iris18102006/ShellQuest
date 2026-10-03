@@ -1,0 +1,30 @@
+:root {
+  --bg: #17121f;
+  --panel: #211a2e;
+  --ink: #e6def5;
+  --muted: #9b8cb8;
+  --accent: #ff6fae;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+main { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+#mission { background: var(--panel); padding: 1.5rem; border-right: 1px solid #33284a; overflow-y: auto; }
+#mission h1 { margin: 0 0 1.5rem; font-size: 1.4rem; color: var(--accent); letter-spacing: 0.02em; }
+#level-title { font-weight: 700; margin: 0 0 0.5rem; }
+#level-story { line-height: 1.55; margin: 0 0 1rem; }
+#level-hint { color: var(--accent); line-height: 1.5; }
+.keys { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
+code { background: #2d2342; padding: 0.1em 0.35em; border-radius: 4px; }
+#term { padding: 1rem; min-width: 0; }
+#term .xterm { height: 100%; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 760px) {
+  main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  #mission { border-right: 0; border-bottom: 1px solid #33284a; max-height: 40vh; }
+}
