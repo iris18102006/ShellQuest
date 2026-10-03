@@ -1,111 +1,115 @@
-# PIXELWAX 💿
+# ShellQuest
 
-> tiny vinyl corner of the internet
+Learn the Linux command line by solving puzzles in a terminal that runs entirely in your browser.
 
-A retro pixel-art turntable that runs entirely in your browser. Drop in your own
-audio files, shelve them into albums with procedurally generated pixel covers,
-and spin them on an animated deck with a working tonearm, VU meter, 3-band EQ
-and pitch control.
+No backend, no real shell, nothing to install for players. Every command runs against an in-memory virtual filesystem, so you can `chmod`, `rm` and pipe things together without breaking anything.
 
-No build step. No dependencies. No server. Just open `index.html`.
+<!-- Replace with a GIF of you solving a level: ![ShellQuest demo](docs/demo.gif) -->
 
-![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
-![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)
-![Vanilla JS](https://img.shields.io/badge/vanilla-JS-f7df1e.svg)
+**Play it:** <!-- https://YOUR-USERNAME.github.io/shellquest/ -->
 
-<!-- Add a screenshot or GIF here once you have one:
-![PIXELWAX screenshot](docs/screenshot.png)
--->
+## How it plays
 
-## Features
+Each level drops you into a fake machine with a goal. You solve it with real commands, and the game checks the result.
 
-- **Animated turntable** — spinning vinyl, tonearm that drops on play, drifting dust motes, CRT scanline overlay
-- **Album shelf** — create, edit and delete albums; each gets a unique pixel cover drawn on a `<canvas>`
-- **Six cover patterns** — stripes, checker, dots, sun, grid, wave, plus a color swatch picker and six ready-made templates
-- **Drag & drop** — drop audio files onto the shelf to make a new album, onto the tracklist to add songs, or straight onto the turntable
-- **Real audio processing** — Web Audio API graph with lowshelf/peaking/highshelf filters, gain, and a live frequency analyser driving the VU meter
-- **Pitch control** — 50%–150% playback rate with pitch preservation disabled, so it warps like real wax
-- **Seven themes** — basement, bubblegum, midnight, cherry, forest, grape, honey
-- **Keyboard shortcuts** — `Space` play/pause, `←` `→` skip tracks
-- **Persistence** — albums, artwork settings and your theme survive a reload via `localStorage`
+```
+user@shellquest:~$ ls
+todo.txt
+user@shellquest:~$ ls -a
+.hidden_note  todo.txt
+user@shellquest:~$ cat .hidden_note
+FLAG{dotfiles_are_not_invisible}
 
-## Quick start
-
-Clone it and open the file:
-
-```bash
-git clone https://github.com/YOUR-USERNAME/pixelwax.git
-cd pixelwax
-open index.html          # macOS
-# xdg-open index.html    # Linux
-# start index.html       # Windows
+*** Level complete! Next up: Level 2: Needle in a log ***
 ```
 
-Opening the file directly works fine. If you'd rather serve it over HTTP
-(recommended, and required if you add a demo track):
+Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your browser.
+
+## Levels
+
+| # | Level | You practice |
+| --- | --- | --- |
+| 1 | Hidden in plain sight | `ls -a`, `cat` |
+| 2 | Needle in a log | `grep` |
+| 3 | Pipe dreams | `sort`, `uniq -c`, `head`, pipes |
+| 4 | Permission denied | file permissions, `chmod` |
+| 5 | Treasure hunt | `find` |
+
+## Supported commands
+
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `whoami`
+
+Plus pipes (`|`), redirects (`>` `>>`), quotes, and `*` / `?` globs.
+
+## Run it locally
+
+You need Node 18 or newer.
 
 ```bash
-python3 -m http.server 8000
-# then visit http://localhost:8000
+git clone https://github.com/YOUR-USERNAME/shellquest.git
+cd shellquest
+npm install
+npm run dev       # http://localhost:5173
 ```
 
-## Usage
+Other scripts:
 
-| Action | How |
+```bash
+npm test          # engine tests + a full playthrough of every level
+npm run build     # production build in dist/
+npm run preview   # serve the production build
+```
+
+## How it works
+
+The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermjs.org/) only draws the terminal; everything it runs comes from this repo.
+
+| File | Job |
 | --- | --- |
-| Create an album | `+ NEW ALBUM`, or drop audio files on the left dropzone |
-| Add songs | Drop files on the right dropzone, or click it to browse |
-| Play an album | Click it in the shelf, then `▶ PLAY ALL` |
-| Load a disc | Drag an album from the shelf onto the turntable |
-| Change artwork | Select an album, then `✎ EDIT ALBUM` |
-| Switch theme | Click a colored dot in the header |
+| `src/vfs.ts` | Virtual filesystem with directories, files, owners and permission bits |
+| `src/parser.ts` | Tokenizer for quotes, pipes and redirects |
+| `src/commands.ts` | Every command, as a small function: `(ctx, args, stdin) => output` |
+| `src/shell.ts` | Runs pipelines, expands globs, executes scripts that have `+x` |
+| `src/levels.ts` | The puzzles |
+| `src/game.ts` | Level progression and built-ins (`help`, `hint`, `reset`) |
+| `src/main.ts` | Terminal setup, line editing, command history |
 
-### About the demo button
+Pipes work by passing each command's output as the next command's `stdin`, the same idea as a real shell.
 
-The `▶ PLAY` button in the transport row looks for an optional file at
-`assets/demo-song.wav`. The repo doesn't ship one — see
-[`assets/README.md`](assets/README.md). Drop any audio file there (and update
-`DEMO_TRACK` in `js/app.js` if you use a different extension) and the button
-will spin it.
+## Add a level
 
-## Project structure
+Append an object to `levels` in `src/levels.ts`:
 
-```
-pixelwax/
-├── index.html              # markup only
-├── css/
-│   └── styles.css          # themes, layout, all the pixel chrome
-├── js/
-│   └── app.js              # state, audio graph, cover generator, UI
-├── assets/                 # optional demo track lives here
-└── .github/workflows/
-    └── deploy-pages.yml    # auto-deploy to GitHub Pages
+```ts
+{
+  title: "Level 6: Your title",
+  story: "What the player sees in the side panel.",
+  hint: "Shown when they type `hint`.",
+  files: { "/home/user/a.txt": "file contents" },
+  check: (a) => a.output.includes("FLAG{...}"),
+}
 ```
 
-## Deploying
+- `files` is the starting filesystem. Use `{ content, mode, exec }` for files with custom permissions or script output.
+- `check` runs after every command and receives `{ command, output }`. Return `true` to complete the level.
+- Add the solution to the playthrough test in `tests/engine.test.ts` so an unsolvable level can never ship.
 
-The included workflow publishes the repo to GitHub Pages on every push to
-`main`. To turn it on: **Settings → Pages → Source → GitHub Actions**. Your site
-lands at `https://YOUR-USERNAME.github.io/pixelwax/`.
+## Add a command
 
-## A note on your files
+Add a function to the `commands` object in `src/commands.ts`. It gets the shell context, its arguments, and the previous command's output (or `null`), and returns `{ out, err? }`. Pipes, redirects and globs work for free.
 
-Tracks are read with `URL.createObjectURL()` and never leave your machine.
-Because object URLs are per-session, **track lists are not restored after a
-reload** — only album metadata and covers persist. Re-drop your files to fill an
-album back in.
+## Deploy to GitHub Pages
 
-## Browser support
+The Vite `base` is set to `./`, so the build works under any repo name. Run `npm run build` and publish the `dist/` folder, or use a GitHub Actions workflow that builds and deploys on every push to `main`.
 
-Needs the Web Audio API, CSS `color-mix()`, and the Web Animations API. Works in
-current Chrome, Edge, Firefox and Safari. Mobile layouts collapse to a single
-column below 760px, though drag-and-drop is desktop-only.
+## Roadmap
 
-## Contributing
-
-Issues and pull requests are welcome. Keep it dependency-free and keep the
-pixels crunchy (`image-rendering: pixelated` is applied globally on purpose).
+- [ ] Tab completion
+- [ ] More commands: `cut`, `sed`, `awk`-lite, `tar`
+- [ ] Levels on variables, `&&`, and shell scripts
+- [ ] Per-command help
+- [ ] Shareable links to a specific level
 
 ## License
 
-[MIT](LICENSE) — hand-soldered in a basement, no records were harmed.
+MIT
