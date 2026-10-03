@@ -6,7 +6,7 @@ No backend, no real shell, nothing to install for players. Every command runs ag
 
 <!-- Replace with a GIF of you solving a level: ![ShellQuest demo](docs/demo.gif) -->
 
-**Play it:** <!-- https://YOUR-USERNAME.github.io/shellquest/ -->
+**Play it:** https://iris18102006.github.io/ShellQuest/
 
 ## How it plays
 
@@ -46,7 +46,7 @@ Plus pipes (`|`), redirects (`>` `>>`), quotes, and `*` / `?` globs.
 You need Node 18 or newer.
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/shellquest.git
+git clone https://github.com/iris18102006/shellquest.git
 cd shellquest
 npm install
 npm run dev       # http://localhost:5173
