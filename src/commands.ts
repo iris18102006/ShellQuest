@@ -228,7 +228,79 @@ export const commands: Record<string, Command> = {
     }
     return ok();
   },
+
+  mv(ctx, args) {
+    const { rest } = split(args);
+    if (rest.length !== 2) return fail("usage: mv SOURCE DEST");
+    const [src, dst] = rest;
+    const node = ctx.fs.get(src, ctx.cwd);
+    if (!node) return fail(`mv: cannot stat '${src}': No such file or directory`);
+    const dest = destPath(ctx, node.name, dst);
+    const segs = FS.segments(dest);
+    const name = segs.pop();
+    if (!name) return fail(`mv: cannot move '${src}' to '${dst}'`);
+    if (dest.startsWith(FS.abs(src, ctx.cwd) + "/")) return fail(`mv: cannot move '${src}' into itself`);
+    const parent = ctx.fs.get("/" + segs.join("/"));
+    if (!parent || parent.type !== "dir") return fail(`mv: cannot move '${src}' to '${dst}': No such file or directory`);
+    ctx.fs.remove(src, ctx.cwd);
+    node.name = name;
+    parent.children[name] = node;
+    return ok();
+  },
+
+  cp(ctx, args) {
+    const { rest } = split(args);
+    if (rest.length !== 2) return fail("usage: cp SOURCE DEST");
+    const [src, dst] = rest;
+    const node = ctx.fs.get(src, ctx.cwd);
+    if (!node) return fail(`cp: cannot stat '${src}': No such file or directory`);
+    if (node.type === "dir") return fail(`cp: -r not specified; omitting directory '${src}'`);
+    if (!can(node, 4, ctx.user)) return fail(`cp: cannot open '${src}' for reading: Permission denied`);
+    const dest = destPath(ctx, node.name, dst);
+    const done = ctx.fs.writeFile(dest, node.content, { mode: node.mode, exec: node.exec, owner: ctx.user });
+    return done ? ok() : fail(`cp: cannot create regular file '${dst}'`);
+  },
+
+  cut(ctx, args, stdin) {
+    let delim = "\t";
+    let fields: number[] = [];
+    const files: string[] = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a.startsWith("-d")) delim = a.length > 2 ? a.slice(2) : args[++i] ?? delim;
+      else if (a.startsWith("-f")) fields = parseFields(a.length > 2 ? a.slice(2) : args[++i] ?? "");
+      else files.push(a);
+    }
+    if (!fields.length) return fail("cut: you must specify a list of fields (-f)");
+    const { texts, err } = readInputs(ctx, files, stdin, "cut");
+    const out = texts.flatMap((t) => lines(t.text)).map((line) => {
+      if (!line.includes(delim)) return line;
+      const parts = line.split(delim);
+      return fields.filter((f) => f <= parts.length).map((f) => parts[f - 1]).join(delim);
+    });
+    return { out: nl(out), err };
+  },
 };
+
+/** Where mv/cp should put something: dst itself, or inside dst if dst is a directory. */
+function destPath(ctx: Ctx, name: string, dst: string): string {
+  const d = ctx.fs.get(dst, ctx.cwd);
+  const abs = FS.abs(dst, ctx.cwd);
+  return d?.type === "dir" ? `${abs === "/" ? "" : abs}/${name}` : abs;
+}
+
+/** "1,3" or "2-4" or "1,3-4" becomes [1,3] / [2,3,4] / [1,3,4]. */
+function parseFields(spec: string): number[] {
+  const out: number[] = [];
+  for (const part of spec.split(",")) {
+    const m = /^(\d+)(?:-(\d+))?$/.exec(part);
+    if (!m) return [];
+    const from = parseInt(m[1], 10);
+    const to = m[2] ? parseInt(m[2], 10) : from;
+    for (let n = from; n <= to; n++) out.push(n);
+  }
+  return out;
+}
 
 function countArg(args: string[], dflt: number): { n: number; files: string[] } {
   let n = dflt;
