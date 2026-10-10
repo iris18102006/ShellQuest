@@ -26,10 +26,11 @@ import { level as l23 } from "./l23";
 import { level as l24 } from "./l24";
 import { level as l25 } from "./l25";
 import { level as l26 } from "./l26";
+import { level as l27 } from "./l27";
 
 export type { Level, Attempt } from "./types";
 
 export const levels: Level[] = [
   l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11,
-  l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26,
+  l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27,
 ];
