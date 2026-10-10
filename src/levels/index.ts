@@ -27,6 +27,7 @@ import { level as l24 } from "./l24";
 import { level as l25 } from "./l25";
 import { level as l26 } from "./l26";
 import { level as l27 } from "./l27";
+import { level as l27 } from "./l27";
 
 export type { Level, Attempt } from "./types";
 
