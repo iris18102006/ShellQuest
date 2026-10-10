@@ -34,10 +34,27 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 3 | Pipe dreams | `sort`, `uniq -c`, `head`, pipes |
 | 4 | Permission denied | file permissions, `chmod` |
 | 5 | Treasure hunt | `find` |
+| 6 | Say it with echo | `echo`, `>` |
+| 7 | Folders all the way down | `mkdir -p` |
+| 8 | Spring cleaning | `rm`, `*` globs |
+| 9 | Skip the noise | `grep -v` |
+| 10 | Count the damage | `grep -c` |
+| 11 | Last words | `tail` |
+| 12 | Line number, please | `grep -n` |
+| 13 | SHOUTING and whispering | `grep -i` |
+| 14 | Glue it together | `cat`, `>` |
+| 15 | Biggest number wins | `sort -n`, `tail` |
+| 16 | Once is enough | `sort -u` |
+| 17 | Lock it down | `chmod 600`, `ls -l` |
+| 18 | Lost in the tree | `..`, relative paths |
+| 19 | Rename it | `mv` |
+| 20 | Backup first | `cp` |
+| 21 | Column surgery | `cut` |
+| 22 | Boss: the access log | chaining `grep` and `wc` |
 
 ## Supported commands
 
-`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `whoami`
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `whoami`
 
 Plus pipes (`|`), redirects (`>` `>>`), quotes, and `*` / `?` globs.
 
@@ -70,7 +87,7 @@ The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermj
 | `src/parser.ts` | Tokenizer for quotes, pipes and redirects |
 | `src/commands.ts` | Every command, as a small function: `(ctx, args, stdin) => output` |
 | `src/shell.ts` | Runs pipelines, expands globs, executes scripts that have `+x` |
-| `src/levels.ts` | The puzzles |
+| `src/levels/` | The puzzles, one file per level |
 | `src/game.ts` | Level progression and built-ins (`help`, `hint`, `reset`) |
 | `src/main.ts` | Terminal setup, line editing, command history |
 
@@ -78,21 +95,24 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Append an object to `levels` in `src/levels.ts`:
+Create `src/levels/l23.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
-{
-  title: "Level 6: Your title",
+import type { Level } from "./types";
+
+export const level: Level = {
+  title: "Level 23: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
+  solution: ["cat a.txt"],
   check: (a) => a.output.includes("FLAG{...}"),
-}
+};
 ```
 
 - `files` is the starting filesystem. Use `{ content, mode, exec }` for files with custom permissions or script output.
-- `check` runs after every command and receives `{ command, output }`. Return `true` to complete the level.
-- Add the solution to the playthrough test in `tests/engine.test.ts` so an unsolvable level can never ship.
+- `check` runs after every command and gets `{ command, output, fs, cwd }`. Return `true` to complete the level. Use `fs` to check what the player changed (files created, permissions, deleted files). `fileText` and `listDir` in `types.ts` help.
+- `solution` is the list of commands that solves it. The tests play every level with it, so an unsolvable level can never ship.
 
 ## Add a command
 
@@ -105,7 +125,8 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 ## Roadmap
 
 - [ ] Tab completion
-- [ ] More commands: `cut`, `sed`, `awk`-lite, `tar`
+- [x] `cp`, `mv`, `cut`
+- [ ] More commands: `sed`, `awk`-lite, `tar`, `tr`
 - [ ] Levels on variables, `&&`, and shell scripts
 - [ ] Per-command help
 - [ ] Shareable links to a specific level
