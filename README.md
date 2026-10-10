@@ -51,6 +51,16 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 20 | Backup first | `cp` |
 | 21 | Column surgery | `cut` |
 | 22 | Boss: the access log | chaining `grep` and `wc` |
+| 23 | Word count | `wc -w` |
+| 24 | Append, don't overwrite | `>>` |
+| 25 | Top of the file | `head` |
+| 26 | Only the real config files | `find -type f` |
+| 27 | Dotfile detective | `find -name ".*"` |
+| 28 | Top 3 | `sort`, `uniq -c`, `head` |
+| 29 | Eyes only | `chmod 700` |
+| 30 | Save the evidence | `grep`, `>` |
+| 31 | Count them all | `wc -l *.csv` |
+| 32 | Boss: the heist | `find`, `cp`, `chmod` |
 
 ## Supported commands
 
