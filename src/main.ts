@@ -25,7 +25,7 @@ const $ = (id: string) => document.getElementById(id)!;
 function renderMission() {
   const l = game.current;
   $("level-title").textContent = game.finished ? "All levels complete" : l.title;
-  $("level-story").textContent = game.finished ? "Push your own levels in src/levels.ts." : l.story;
+  $("level-story").textContent = game.finished ? "Add your own levels in src/levels/." : l.story;
   $("level-hint").hidden = true;
 }
 

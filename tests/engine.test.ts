@@ -3,6 +3,7 @@ import { FS } from "../src/vfs";
 import { Shell } from "../src/shell";
 import { Game } from "../src/game";
 import { parse } from "../src/parser";
+import { levels } from "../src/levels";
 
 const sh = (spec = {}) => new Shell(FS.from(spec));
 
@@ -49,24 +50,64 @@ describe("shell", () => {
   });
 });
 
+describe("mv, cp, cut", () => {
+  it("mv renames and moves into directories", () => {
+    const s = sh({ "/home/user/a.txt": "hi\n", "/home/user/dir/keep": "" });
+    s.run("mv a.txt b.txt");
+    expect(s.run("ls").out).toBe("b.txt  dir/\n");
+    s.run("mv b.txt dir");
+    expect(s.run("cat dir/b.txt").out).toBe("hi\n");
+    expect(s.run("mv nope x").err).toContain("No such file");
+  });
+  it("mv refuses to move a folder into itself", () => {
+    const s = sh({ "/home/user/d/x": "1\n" });
+    expect(s.run("mv d d/inner").err).toContain("into itself");
+    expect(s.run("cat d/x").out).toBe("1\n");
+  });
+  it("cp copies and keeps the original", () => {
+    const s = sh({ "/home/user/a.txt": "hi\n" });
+    s.run("cp a.txt a.bak");
+    expect(s.run("cat a.bak").out).toBe("hi\n");
+    expect(s.run("cat a.txt").out).toBe("hi\n");
+    s.run("mkdir d");
+    s.run("cp a.txt d");
+    expect(s.run("cat d/a.txt").out).toBe("hi\n");
+  });
+  it("cp refuses directories", () => {
+    const s = sh({ "/home/user/d/x": "1" });
+    expect(s.run("cp d e").err).toContain("-r not specified");
+  });
+  it("cut picks fields", () => {
+    const s = sh({ "/home/user/u.csv": "a,1,x\nb,2,y\n" });
+    expect(s.run("cut -d, -f1 u.csv").out).toBe("a\nb\n");
+    expect(s.run("cut -d , -f 2,3 u.csv").out).toBe("1,x\n2,y\n");
+    expect(s.run("cat u.csv | cut -d, -f3").out).toBe("x\ny\n");
+  });
+});
+
 describe("levels are solvable", () => {
-  const solve = (steps: string[][]) => {
-    const g = new Game(0);
-    steps.forEach((cmds, i) => {
-      cmds.forEach((c, j) => {
+  levels.forEach((lvl, i) => {
+    it(`${lvl.title}`, () => {
+      const g = new Game(i);
+      lvl.solution.forEach((c, j) => {
         const t = g.input(c);
-        const last = j === cmds.length - 1;
-        expect(t.levelChanged === true, `level ${i + 1} cmd "${c}"`).toBe(last);
+        const last = j === lvl.solution.length - 1;
+        expect(t.levelChanged === true, `cmd "${c}"`).toBe(last);
       });
+      expect(g.level).toBe(i + 1);
     });
+  });
+
+  it("full playthrough from level 1", () => {
+    const g = new Game(0);
+    for (const lvl of levels) for (const c of lvl.solution) g.input(c);
     expect(g.finished).toBe(true);
-  };
-  it("full playthrough", () =>
-    solve([
-      ["ls", "ls -a", "cat .hidden_note"],
-      ["grep CRITICAL server.log"],
-      ["sort visitors.txt | uniq -c | sort -rn | head -n 1"],
-      ["./run.sh", "chmod +x run.sh", "./run.sh"],
-      ["find /srv -name master.key", "cat /srv/backups/2025/archive/deep/master.key"],
-    ]));
+  });
+
+  it("no level is solved before the player types anything", () => {
+    levels.forEach((lvl, i) => {
+      const g = new Game(i);
+      expect(g.input("pwd").levelChanged, lvl.title).toBeFalsy();
+    });
+  });
 });
