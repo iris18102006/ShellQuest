@@ -61,12 +61,27 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 30 | Save the evidence | `grep`, `>` |
 | 31 | Count them all | `wc -l *.csv` |
 | 32 | Boss: the heist | `find`, `cp`, `chmod` |
+| 33 | Dig through everything | `grep -r` |
+| 34 | Names only, please | `grep -l` |
+| 35 | Shout it | `tr a-z A-Z`, `<` |
+| 36 | Strip it | `tr -d` |
+| 37 | Find and replace | `sed 's/a/b/g'` |
+| 38 | Edit in place | `sed -i` |
+| 39 | Delete a line | `sed 'Nd'` |
+| 40 | Pick a column | `awk '{print $2}'` |
+| 41 | Filter and print | `awk -F, '$3 > 100 {print $1}'` |
+| 42 | Show and save | `tee` |
+| 43 | Clone the folder | `cp -r` |
+| 44 | Sort by column | `sort -t, -k2 -nr` |
+| 45 | Boss: the breach report | `grep -r`, `awk`, `cut`, `sort -u`, `>` |
 
 ## Supported commands
 
-`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `whoami`
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `whoami`
 
-Plus pipes (`|`), redirects (`>` `>>`), quotes, and `*` / `?` globs.
+Plus pipes (`|`), redirects (`>` `>>` `<`), quotes, and `*` / `?` globs.
+
+`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`.
 
 ## Run it locally
 
@@ -105,13 +120,13 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l23.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l46.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
 
 export const level: Level = {
-  title: "Level 23: Your title",
+  title: "Level 46: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
@@ -136,7 +151,8 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 
 - [ ] Tab completion
 - [x] `cp`, `mv`, `cut`
-- [ ] More commands: `sed`, `awk`-lite, `tar`, `tr`
+- [x] `tr`, `sed`, `awk`-lite, `tee`, `grep -r`, `cp -r`
+- [ ] More commands: `tar`, `diff`, `sort -k` ranges, `awk` sums (`END`)
 - [ ] Levels on variables, `&&`, and shell scripts
 - [ ] Per-command help
 - [ ] Shareable links to a specific level

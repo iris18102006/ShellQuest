@@ -43,6 +43,12 @@ export class Shell implements Ctx {
     let out = "";
 
     for (const cmd of pipeline) {
+      if (cmd.input) {
+        const n = this.fs.get(cmd.input, this.cwd);
+        if (!n || n.type !== "file") { errs.push(`shell: ${cmd.input}: No such file or directory`); out = ""; stdin = ""; continue; }
+        if (!can(n, 4, this.user)) { errs.push(`shell: ${cmd.input}: Permission denied`); out = ""; stdin = ""; continue; }
+        stdin = n.content;
+      }
       const argv = this.expand(cmd);
       const name = argv[0];
       let res: { out: string; err?: string };

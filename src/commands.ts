@@ -127,11 +127,36 @@ export const commands: Record<string, Command> = {
   },
 
   sort(ctx, args, stdin) {
-    const { flags, rest } = split(args);
-    const { texts, err } = readInputs(ctx, rest, stdin, "sort");
+    const flags = new Set<string>();
+    const files: string[] = [];
+    let sep: string | null = null;
+    let key: { from: number; to: number | null } | null = null;
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "-t") sep = args[++i] ?? null;
+      else if (a.startsWith("-t") && a.length > 2) sep = a.slice(2);
+      else if (a === "-k" || (a.startsWith("-k") && a.length > 2)) {
+        const spec = a.length > 2 ? a.slice(2) : args[++i] ?? "";
+        const m = /^(\d+)(?:,(\d+))?([a-zA-Z]*)$/.exec(spec);
+        if (!m) return fail(`sort: invalid key '${spec}'`);
+        key = { from: parseInt(m[1], 10), to: m[2] ? parseInt(m[2], 10) : null };
+        for (const c of m[3]) flags.add(c);
+      } else if (/^-[a-zA-Z]+$/.test(a)) for (const c of a.slice(1)) flags.add(c);
+      else files.push(a);
+    }
+    const { texts, err } = readInputs(ctx, files, stdin, "sort");
     let ls = texts.flatMap((t) => lines(t.text));
-    if (flags.has("n")) ls.sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0));
-    else ls.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    const keyOf = (l: string): string => {
+      if (!key) return l;
+      const parts = sep !== null ? l.split(sep) : l.trim().split(/\s+/);
+      return parts.slice(key.from - 1, key.to ?? undefined).join(sep ?? " ");
+    };
+    ls.sort((a, b) => {
+      const ka = keyOf(a), kb = keyOf(b);
+      let c = flags.has("n") ? (parseFloat(ka) || 0) - (parseFloat(kb) || 0) : ka < kb ? -1 : ka > kb ? 1 : 0;
+      if (c === 0 && key) c = a < b ? -1 : a > b ? 1 : 0;
+      return c;
+    });
     if (flags.has("r")) ls.reverse();
     if (flags.has("u")) ls = ls.filter((l, i) => ls.indexOf(l) === i);
     return { out: nl(ls), err };
@@ -151,22 +176,31 @@ export const commands: Record<string, Command> = {
 
   grep(ctx, args, stdin) {
     const { flags, rest } = split(args);
-    const [pattern, ...files] = rest;
-    if (pattern === undefined) return fail("usage: grep [-ivcn] PATTERN [FILE...]");
+    const [pattern, ...operands] = rest;
+    if (pattern === undefined) return fail("usage: grep [-ivcnrlh] PATTERN [FILE...]");
     let re: RegExp;
     try { re = new RegExp(pattern, flags.has("i") ? "i" : ""); }
     catch { return fail(`grep: invalid pattern '${pattern}'`); }
-    const { texts, err } = readInputs(ctx, files, stdin, "grep");
-    const multi = texts.length > 1;
+    const recursive = flags.has("r") || flags.has("R");
+    const src = recursive
+      ? collectFiles(ctx, operands.length ? operands : ["."], "grep")
+      : { ...readInputs(ctx, operands, stdin, "grep"), sawDir: false };
+    const { texts, err } = src;
+    const showName = !flags.has("h") && (texts.length > 1 || (recursive && src.sawDir));
     const out: string[] = [];
+    const matched: string[] = [];
     let count = 0;
     for (const t of texts) {
+      let hits = 0;
       lines(t.text).forEach((line, i) => {
         if (re.test(line) === flags.has("v")) return;
+        hits++;
         count++;
-        out.push((multi ? t.name + ":" : "") + (flags.has("n") ? `${i + 1}:` : "") + line);
+        out.push((showName ? t.name + ":" : "") + (flags.has("n") ? `${i + 1}:` : "") + line);
       });
+      if (hits) matched.push(t.name === "-" ? "(standard input)" : t.name);
     }
+    if (flags.has("l")) return { out: nl(matched), err };
     return { out: flags.has("c") ? `${count}\n` : nl(out), err };
   },
 
@@ -249,12 +283,24 @@ export const commands: Record<string, Command> = {
   },
 
   cp(ctx, args) {
-    const { rest } = split(args);
-    if (rest.length !== 2) return fail("usage: cp SOURCE DEST");
+    const { flags, rest } = split(args);
+    if (rest.length !== 2) return fail("usage: cp [-r] SOURCE DEST");
     const [src, dst] = rest;
     const node = ctx.fs.get(src, ctx.cwd);
     if (!node) return fail(`cp: cannot stat '${src}': No such file or directory`);
-    if (node.type === "dir") return fail(`cp: -r not specified; omitting directory '${src}'`);
+    if (node.type === "dir") {
+      if (!flags.has("r") && !flags.has("R")) return fail(`cp: -r not specified; omitting directory '${src}'`);
+      const from = FS.abs(src, ctx.cwd);
+      const dest = destPath(ctx, node.name, dst);
+      if (dest === from || dest.startsWith(from + "/")) return fail(`cp: cannot copy a directory, '${src}', into itself, '${dst}'`);
+      const segs = FS.segments(dest);
+      const name = segs.pop();
+      const parent = ctx.fs.get("/" + segs.join("/"));
+      if (!name || !parent || parent.type !== "dir") return fail(`cp: cannot create directory '${dst}': No such file or directory`);
+      if (parent.children[name]?.type === "file") return fail(`cp: cannot overwrite non-directory '${dst}' with directory '${src}'`);
+      parent.children[name] = cloneNode(node, name, ctx.user);
+      return ok();
+    }
     if (!can(node, 4, ctx.user)) return fail(`cp: cannot open '${src}' for reading: Permission denied`);
     const dest = destPath(ctx, node.name, dst);
     const done = ctx.fs.writeFile(dest, node.content, { mode: node.mode, exec: node.exec, owner: ctx.user });
@@ -278,6 +324,91 @@ export const commands: Record<string, Command> = {
       const parts = line.split(delim);
       return fields.filter((f) => f <= parts.length).map((f) => parts[f - 1]).join(delim);
     });
+    return { out: nl(out), err };
+  },
+
+  tee(ctx, args, stdin) {
+    const { flags, rest } = split(args);
+    const text = stdin ?? "";
+    for (const f of rest) {
+      const prev = ctx.fs.get(f, ctx.cwd);
+      if (prev?.type === "dir") return { out: text, err: `tee: ${f}: Is a directory` };
+      const base = flags.has("a") && prev?.type === "file" ? prev.content : "";
+      ctx.fs.writeFile(f, base + text, { cwd: ctx.cwd, owner: ctx.user });
+    }
+    return ok(text);
+  },
+
+  tr(_ctx, args, stdin) {
+    const { flags, rest } = split(args);
+    const del = flags.has("d");
+    const squeeze = flags.has("s");
+    const [s1, s2] = rest;
+    if (!s1 || (!del && !squeeze && s2 === undefined)) return fail("usage: tr [-ds] SET1 [SET2]");
+    if (stdin === null) return fail("tr: needs input (pipe something in, or use < file)");
+    const from = expandSet(s1);
+    const to = s2 !== undefined ? expandSet(s2) : [];
+    const squeezeSet = to.length ? to : from;
+    let out = "";
+    let last = "";
+    for (const ch of stdin) {
+      let c = ch;
+      const i = from.indexOf(ch);
+      if (i >= 0) {
+        if (del) continue;
+        if (to.length) c = to[Math.min(i, to.length - 1)];
+      }
+      if (squeeze && squeezeSet.includes(c) && c === last) continue;
+      out += c;
+      last = c;
+    }
+    return ok(out);
+  },
+
+  sed(ctx, args, stdin) {
+    const flags = new Set<string>();
+    const rest: string[] = [];
+    for (const a of args) {
+      if (/^-[a-zA-Z]+$/.test(a)) for (const c of a.slice(1)) flags.add(c);
+      else rest.push(a);
+    }
+    const [script, ...files] = rest;
+    if (script === undefined) return fail("usage: sed [-n] [-i] SCRIPT [FILE...]");
+    const prog = parseSed(script);
+    if (typeof prog === "string") return fail("sed: " + prog);
+    if (flags.has("i") && !files.length) return fail("sed: no input files");
+    const { texts, err } = readInputs(ctx, files, stdin, "sed");
+    if (flags.has("i")) {
+      for (const t of texts) ctx.fs.writeFile(t.name, runSed(prog, t.text, flags.has("n")), { cwd: ctx.cwd, owner: ctx.user });
+      return { out: "", err };
+    }
+    return { out: texts.map((t) => runSed(prog, t.text, flags.has("n"))).join(""), err };
+  },
+
+  awk(ctx, args, stdin) {
+    let sep: string | null = null;
+    const rest: string[] = [];
+    for (let i = 0; i < args.length; i++) {
+      const a = args[i];
+      if (a === "-F") sep = args[++i] ?? null;
+      else if (a.startsWith("-F") && a.length > 2) sep = a.slice(2);
+      else rest.push(a);
+    }
+    const [src, ...files] = rest;
+    if (src === undefined) return fail("usage: awk [-F SEP] 'PROGRAM' [FILE...]");
+    const prog = parseAwk(src);
+    if (typeof prog === "string") return fail("awk: " + prog);
+    if (sep === "\\t") sep = "\t";
+    const { texts, err } = readInputs(ctx, files, stdin, "awk");
+    const out: string[] = [];
+    let nr = 0;
+    for (const t of texts) {
+      for (const line of lines(t.text)) {
+        nr++;
+        const f = sep !== null ? line.split(sep) : line.trim() === "" ? [] : line.trim().split(/\s+/);
+        if (prog.cond(line, f, nr)) out.push(prog.items.map((it) => it(line, f, nr)).join(" "));
+      }
+    }
     return { out: nl(out), err };
   },
 };
@@ -312,4 +443,253 @@ function countArg(args: string[], dflt: number): { n: number; files: string[] } 
     else files.push(a);
   }
   return { n, files };
+}
+
+/** Walk files and folders for grep -r. Names are the paths as the player typed them. */
+function collectFiles(ctx: Ctx, starts: string[], cmd: string):
+  { texts: { name: string; text: string }[]; err?: string; sawDir: boolean } {
+  const texts: { name: string; text: string }[] = [];
+  const errs: string[] = [];
+  let sawDir = false;
+  const walk = (n: Node, path: string) => {
+    if (n.type === "file") {
+      if (can(n, 4, ctx.user)) texts.push({ name: path, text: n.content });
+      else errs.push(`${cmd}: ${path}: Permission denied`);
+      return;
+    }
+    if (!can(n, 1, ctx.user)) return void errs.push(`${cmd}: ${path}: Permission denied`);
+    for (const c of Object.values(n.children).sort((a, b) => a.name.localeCompare(b.name)))
+      walk(c, path === "." ? c.name : path.replace(/\/$/, "") + "/" + c.name);
+  };
+  for (const s of starts) {
+    const n = ctx.fs.get(s, ctx.cwd);
+    if (!n) errs.push(`${cmd}: ${s}: No such file or directory`);
+    else { if (n.type === "dir") sawDir = true; walk(n, s); }
+  }
+  return { texts, err: errs.length ? errs.join("\n") : undefined, sawDir };
+}
+
+/** Deep copy of a file or folder (for cp -r). */
+function cloneNode(n: Node, name: string, owner: string): Node {
+  if (n.type === "file") return { ...n, name, owner };
+  const children: Record<string, Node> = {};
+  for (const c of Object.values(n.children)) children[c.name] = cloneNode(c, c.name, owner);
+  return { type: "dir", name, mode: n.mode, owner, children };
+}
+
+// ---------- tr ----------
+const UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const LOWER = "abcdefghijklmnopqrstuvwxyz";
+const CLASSES: Record<string, string> = {
+  "[:upper:]": UPPER, "[:lower:]": LOWER, "[:alpha:]": UPPER + LOWER, "[:digit:]": "0123456789",
+  "[:alnum:]": UPPER + LOWER + "0123456789", "[:space:]": " \t\n", "[:punct:]": "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+};
+
+/** "a-z" -> [a..z], "[:digit:]" -> [0..9], "\n" -> newline. */
+function expandSet(spec: string): string[] {
+  const out: string[] = [];
+  const unescape = (c: string) => (c === "n" ? "\n" : c === "t" ? "\t" : c);
+  let i = 0;
+  while (i < spec.length) {
+    const cls = Object.keys(CLASSES).find((k) => spec.startsWith(k, i));
+    if (cls) { out.push(...CLASSES[cls]); i += cls.length; continue; }
+    let c = spec[i];
+    if (c === "\\" && i + 1 < spec.length) c = unescape(spec[++i]);
+    if (spec[i + 1] === "-" && i + 2 < spec.length) {
+      let end = spec[i + 2];
+      let adv = 3;
+      if (end === "\\" && i + 3 < spec.length) { end = unescape(spec[i + 3]); adv = 4; }
+      for (let k = c.charCodeAt(0); k <= end.charCodeAt(0); k++) out.push(String.fromCharCode(k));
+      i += adv;
+      continue;
+    }
+    out.push(c);
+    i++;
+  }
+  return out;
+}
+
+// ---------- sed ----------
+type Addr = { n: number } | { last: true } | { re: RegExp };
+interface SedProg { a1?: Addr; a2?: Addr; cmd: "d" | "p" | "s"; re?: RegExp; repl?: string; groups?: number }
+
+function findUnescaped(s: string, ch: string, from: number): number {
+  for (let i = from; i < s.length; i++) {
+    if (s[i] === "\\") i++;
+    else if (s[i] === ch) return i;
+  }
+  return -1;
+}
+
+function parseAddr(s: string, pos: number): { addr: Addr; end: number } | null {
+  if (s[pos] === "$") return { addr: { last: true }, end: pos + 1 };
+  const num = /^\d+/.exec(s.slice(pos));
+  if (num) return { addr: { n: parseInt(num[0], 10) }, end: pos + num[0].length };
+  if (s[pos] === "/") {
+    const e = findUnescaped(s, "/", pos + 1);
+    if (e < 0) return null;
+    return { addr: { re: new RegExp(s.slice(pos + 1, e).split("\\/").join("/")) }, end: e + 1 };
+  }
+  return null;
+}
+
+/** Supports: Nd  N,Md  /re/d  $d  Np  s/a/b/[gi]  (with -n and -i handled by the caller). */
+function parseSed(script: string): SedProg | string {
+  script = script.trim();
+  try {
+    let pos = 0;
+    const prog: SedProg = { cmd: "p" };
+    const first = parseAddr(script, 0);
+    if (first) {
+      prog.a1 = first.addr;
+      pos = first.end;
+      if (script[pos] === ",") {
+        const second = parseAddr(script, pos + 1);
+        if (!second) return "bad address after ','";
+        prog.a2 = second.addr;
+        pos = second.end;
+      }
+    }
+    const c = script[pos];
+    if (c === "d" || c === "p") {
+      if (script.slice(pos + 1).trim()) return "extra characters after command";
+      prog.cmd = c;
+      return prog;
+    }
+    if (c === "s") {
+      const delim = script[pos + 1];
+      if (!delim) return "unterminated `s' command";
+      const e1 = findUnescaped(script, delim, pos + 2);
+      const e2 = e1 < 0 ? -1 : findUnescaped(script, delim, e1 + 1);
+      if (e2 < 0) return "unterminated `s' command";
+      const unesc = (t: string) => t.split("\\" + delim).join(delim);
+      const pat = unesc(script.slice(pos + 2, e1));
+      const fl = script.slice(e2 + 1).trim();
+      if (!/^[gi]*$/.test(fl)) return "unknown option to `s'";
+      prog.cmd = "s";
+      prog.re = new RegExp(pat, (fl.includes("g") ? "g" : "") + (fl.includes("i") ? "i" : ""));
+      prog.repl = unesc(script.slice(e1 + 1, e2));
+      prog.groups = (new RegExp(pat + "|").exec("") as RegExpExecArray).length - 1;
+      return prog;
+    }
+    return `unknown command: '${c ?? ""}'`;
+  } catch {
+    return "invalid regular expression";
+  }
+}
+
+function runSed(prog: SedProg, text: string, quiet: boolean): string {
+  const ls = lines(text);
+  const out: string[] = [];
+  let inRange = false;
+  const at = (a: Addr, n: number, line: string) => ("n" in a ? a.n === n : "last" in a ? n === ls.length : a.re.test(line));
+  ls.forEach((line, idx) => {
+    const n = idx + 1;
+    let hit: boolean;
+    if (!prog.a1) hit = true;
+    else if (!prog.a2) hit = at(prog.a1, n, line);
+    else if (inRange) {
+      hit = true;
+      if ("n" in prog.a2 ? n >= prog.a2.n : at(prog.a2, n, line)) inRange = false;
+    } else if (at(prog.a1, n, line)) {
+      hit = true;
+      inRange = !("n" in prog.a2 && prog.a2.n <= n);
+    } else hit = false;
+
+    let cur = line;
+    let deleted = false;
+    if (hit) {
+      if (prog.cmd === "d") deleted = true;
+      else if (prog.cmd === "p") out.push(line);
+      else {
+        const repl = prog.repl ?? "";
+        const ng = prog.groups ?? 0;
+        cur = line.replace(prog.re as RegExp, (m: string, ...r: unknown[]) =>
+          repl.replace(/\\([0-9&\\])|&/g, (t, e) => (t === "&" ? m : e === "&" ? "&" : e === "\\" ? "\\" : String(r[+e - 1 < ng ? +e - 1 : 999] ?? ""))));
+      }
+    }
+    if (!deleted && !quiet) out.push(cur);
+  });
+  return nl(out);
+}
+
+// ---------- awk ----------
+type Ref = (line: string, f: string[], nr: number) => string;
+interface AwkProg { cond: (line: string, f: string[], nr: number) => boolean; items: Ref[] }
+
+function parseRef(src: string): Ref | null {
+  const s = src.trim();
+  let m: RegExpExecArray | null;
+  if (s === "NR") return (_l, _f, nr) => String(nr);
+  if (s === "NF") return (_l, f) => String(f.length);
+  if (s === "$NF") return (_l, f) => f[f.length - 1] ?? "";
+  if ((m = /^\$\(NF\s*-\s*(\d+)\)$/.exec(s))) { const k = parseInt(m[1], 10); return (_l, f) => f[f.length - 1 - k] ?? ""; }
+  if ((m = /^\$(\d+)$/.exec(s))) { const n = parseInt(m[1], 10); return (l, f) => (n === 0 ? l : f[n - 1] ?? ""); }
+  if ((m = /^"(.*)"$/.exec(s))) { const lit = m[1]; return () => lit; }
+  if (/^-?\d+(\.\d+)?$/.test(s)) return () => s;
+  return null;
+}
+
+function splitItems(s: string): string[] {
+  const parts: string[] = [];
+  let cur = "";
+  let q = false;
+  for (const c of s) {
+    if (c === '"') q = !q;
+    if (c === "," && !q) { parts.push(cur); cur = ""; } else cur += c;
+  }
+  if (cur.trim() || parts.length) parts.push(cur);
+  return parts;
+}
+
+const isNum = (s: string) => /^\s*-?\d+(\.\d+)?\s*$/.test(s);
+
+/** Supports: '{print $1, $NF}'  '$3 > 100 {print $1}'  '/re/'  '$2 ~ /re/'  '$1 == "x"' */
+function parseAwk(src: string): AwkProg | string {
+  const ob = src.indexOf("{");
+  const condSrc = (ob < 0 ? src : src.slice(0, ob)).trim();
+  let action = "print";
+  if (ob >= 0) {
+    const cb = src.lastIndexOf("}");
+    if (cb < ob) return "syntax error: missing }";
+    action = src.slice(ob + 1, cb).trim();
+  }
+  if (!/^print(\s|$)/.test(action)) return "only 'print' actions are supported";
+  const itemSrc = splitItems(action.slice(5).trim());
+  const items: Ref[] = [];
+  for (const it of itemSrc.length ? itemSrc : ["$0"]) {
+    const r = parseRef(it);
+    if (!r) return `can't understand '${it.trim()}'`;
+    items.push(r);
+  }
+
+  let cond: AwkProg["cond"] = () => true;
+  let m: RegExpExecArray | null;
+  if (!condSrc) {
+    // always true
+  } else if ((m = /^\/(.*)\/$/.exec(condSrc))) {
+    const re = new RegExp(m[1]);
+    cond = (l) => re.test(l);
+  } else if ((m = /^(\$\([^)]*\)|\$\w+|NR|NF)\s*(!?~)\s*\/(.*)\/$/.exec(condSrc))) {
+    const left = parseRef(m[1]);
+    if (!left) return `can't understand '${m[1]}'`;
+    const re = new RegExp(m[3]);
+    const neg = m[2] === "!~";
+    cond = (l, f, nr) => re.test(left(l, f, nr)) !== neg;
+  } else if ((m = /^(\$\([^)]*\)|\$\w+|NR|NF)\s*(==|!=|>=|<=|>|<)\s*(.+)$/.exec(condSrc))) {
+    const left = parseRef(m[1]);
+    const right = parseRef(m[3]);
+    if (!left || !right) return `can't understand '${condSrc}'`;
+    const quoted = /^\s*".*"\s*$/.test(m[3]);
+    const op = m[2];
+    cond = (l, f, nr) => {
+      const a = left(l, f, nr);
+      const b = right(l, f, nr);
+      const numeric = !quoted && isNum(a) && isNum(b);
+      const x: string | number = numeric ? parseFloat(a) : a;
+      const y: string | number = numeric ? parseFloat(b) : b;
+      return op === "==" ? x === y : op === "!=" ? x !== y : op === ">" ? x > y : op === "<" ? x < y : op === ">=" ? x >= y : x <= y;
+    };
+  } else return `can't understand condition '${condSrc}'`;
+  return { cond, items };
 }

@@ -4,9 +4,10 @@ import { levels } from "./levels";
 
 export interface Turn { out: string; err: string; clear?: boolean; levelChanged?: boolean }
 
-const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcn] head tail wc sort [-nru] uniq [-c]
-          find [-name -type] chmod mkdir touch rm cp mv cut whoami
-You can use pipes (|), redirects (> >>), quotes and * globs.
+const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail wc sort [-nru -t -k] uniq [-c]
+          find [-name -type] chmod mkdir touch rm cp [-r] mv cut tr [-ds] sed [-ni] awk [-F]
+          tee [-a] whoami
+You can use pipes (|), redirects (> >> <), quotes and * globs.
 Game: hint  level  reset  clear  help
 `;
 
