@@ -32,9 +32,22 @@ import { level as l29 } from "./l29";
 import { level as l30 } from "./l30";
 import { level as l31 } from "./l31";
 import { level as l32 } from "./l32";
+import { level as l33 } from "./l33";
+import { level as l34 } from "./l34";
+import { level as l35 } from "./l35";
+import { level as l36 } from "./l36";
+import { level as l37 } from "./l37";
+import { level as l38 } from "./l38";
+import { level as l39 } from "./l39";
+import { level as l40 } from "./l40";
+import { level as l41 } from "./l41";
+import { level as l42 } from "./l42";
+import { level as l43 } from "./l43";
+import { level as l44 } from "./l44";
+import { level as l45 } from "./l45";
 
 export type { Level, Attempt } from "./types";
 
 export const levels: Level[] = [
-  l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32,
+  l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32, l33, l34, l35, l36, l37, l38, l39, l40, l41, l42, l43, l44, l45,
 ];

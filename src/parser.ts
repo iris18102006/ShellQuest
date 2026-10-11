@@ -1,11 +1,11 @@
-// Tokenizer + pipeline parser: supports quotes, |, >, >>
+// Tokenizer + pipeline parser: supports quotes, |, >, >>, <
 
 /** raw[i] is true when argv[i] had no quotes (so it may be glob-expanded). */
-export interface Cmd { argv: string[]; raw: boolean[]; redirect?: { path: string; append: boolean } }
+export interface Cmd { argv: string[]; raw: boolean[]; redirect?: { path: string; append: boolean }; input?: string }
 
 export class ParseError extends Error {}
 
-type Tok = { t: "word"; v: string; q: boolean } | { t: "op"; v: "|" | ">" | ">>" };
+type Tok = { t: "word"; v: string; q: boolean } | { t: "op"; v: "|" | ">" | ">>" | "<" };
 
 export function tokenize(line: string): Tok[] {
   const toks: Tok[] = [];
@@ -26,6 +26,8 @@ export function tokenize(line: string): Tok[] {
       push();
     } else if (c === "|") {
       push(); toks.push({ t: "op", v: "|" });
+    } else if (c === "<") {
+      push(); toks.push({ t: "op", v: "<" });
     } else if (c === ">") {
       push();
       if (line[i + 1] === ">") { toks.push({ t: "op", v: ">>" }); i++; }
@@ -56,7 +58,8 @@ export function parse(line: string): Cmd[] {
     } else {
       const target = toks[++i];
       if (!target || target.t !== "word") throw new ParseError("syntax error: missing file after redirect");
-      cmd.redirect = { path: target.v, append: tk.v === ">>" };
+      if (tk.v === "<") cmd.input = target.v;
+      else cmd.redirect = { path: target.v, append: tk.v === ">>" };
     }
   }
   if (!cmd.argv.length) {
