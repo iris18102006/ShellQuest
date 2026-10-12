@@ -58,7 +58,13 @@ export class Shell implements Ctx {
 
   private runPipeline(line: string): RunResult {
     let pipeline: Cmd[];
-    try { pipeline = parse(line, this.vars); }
+    const subErrs: string[] = [];
+    const sub = (inner: string) => {
+      const r = this.run(inner);
+      if (r.err) subErrs.push(r.err.replace(/\n$/, ""));
+      return r.out;
+    };
+    try { pipeline = parse(line, this.vars, sub); }
     catch (e) { return { out: "", err: `shell: ${(e as ParseError).message}\n` }; }
 
     // NAME=value on its own is an assignment, not a command.
@@ -70,7 +76,7 @@ export class Shell implements Ctx {
     }
 
     let stdin: string | null = null;
-    const errs: string[] = [];
+    const errs: string[] = [...subErrs];
     let out = "";
 
     for (const cmd of pipeline) {
