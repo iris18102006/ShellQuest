@@ -13,8 +13,25 @@ function readVar(line: string, i: number): { name: string; end: number } | null 
   return m ? { name: m[1] ?? m[2], end: i + m[0].length } : null;
 }
 
-/** With `vars`, $NAME is expanded outside single quotes. Without it, `$` is left alone. */
-export function tokenize(line: string, vars?: Record<string, string>): Tok[] {
+/** Reads $( ... ) at line[i] (the `$`). Returns the text inside and where it ends. */
+function readSub(line: string, i: number): { inner: string; end: number } {
+  let depth = 1;
+  let quote: string | null = null;
+  for (let j = i + 2; j < line.length; j++) {
+    const c = line[j];
+    if (quote) { if (c === quote) quote = null; }
+    else if (c === "'" || c === '"') quote = c;
+    else if (c === "(") depth++;
+    else if (c === ")" && --depth === 0) return { inner: line.slice(i + 2, j), end: j + 1 };
+  }
+  throw new ParseError("unterminated $(");
+}
+
+/**
+ * With `vars`, $NAME is expanded outside single quotes. Without it, `$` is left alone.
+ * With `sub`, $(command) is replaced by what that command prints.
+ */
+export function tokenize(line: string, vars?: Record<string, string>, sub?: (cmd: string) => string): Tok[] {
   const toks: Tok[] = [];
   let cur = "";
   let has = false;
@@ -24,9 +41,11 @@ export function tokenize(line: string, vars?: Record<string, string>): Tok[] {
 
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    const v = vars && c === "$" && quote !== "'" ? readVar(line, i) : null;
+    const isSub = sub && c === "$" && line[i + 1] === "(" && quote !== "'";
+    const v = isSub ? readSub(line, i)
+      : vars && c === "$" && quote !== "'" ? readVar(line, i) : null;
     if (v) {
-      const val = vars![v.name] ?? "";
+      const val = "inner" in v ? sub!(v.inner).replace(/\n+$/, "") : vars![v.name] ?? "";
       if (quote) cur += val;
       else {
         // Unquoted values are split on whitespace, like a real shell does.
@@ -60,8 +79,8 @@ export function tokenize(line: string, vars?: Record<string, string>): Tok[] {
   return toks;
 }
 
-export function parse(line: string, vars?: Record<string, string>): Cmd[] {
-  const toks = tokenize(line, vars);
+export function parse(line: string, vars?: Record<string, string>, sub?: (cmd: string) => string): Cmd[] {
+  const toks = tokenize(line, vars, sub);
   const pipeline: Cmd[] = [];
   let cmd: Cmd = { argv: [], raw: [] };
 
@@ -94,6 +113,7 @@ export function splitChain(line: string): { text: string; before: "&&" | ";" | n
   const parts: { text: string; before: "&&" | ";" | null }[] = [];
   let cur = "";
   let quote: string | null = null;
+  let depth = 0; // how deep inside $( ) we are
   let before: "&&" | ";" | null = null;
   const flush = (op: "&&" | ";") => {
     if (!cur.trim()) throw new ParseError(`syntax error near '${op}'`);
@@ -105,8 +125,11 @@ export function splitChain(line: string): { text: string; before: "&&" | ";" | n
     const c = line[i];
     if (quote) { if (c === quote) quote = null; cur += c; }
     else if (c === "'" || c === '"') { quote = c; cur += c; }
-    else if (c === "&" && line[i + 1] === "&") { flush("&&"); i++; }
-    else if (c === ";") flush(";");
+    else if (c === "$" && line[i + 1] === "(") { depth++; cur += "$("; i++; }
+    else if (c === "(" && depth > 0) { depth++; cur += c; }
+    else if (c === ")" && depth > 0) { depth--; cur += c; }
+    else if (depth === 0 && c === "&" && line[i + 1] === "&") { flush("&&"); i++; }
+    else if (depth === 0 && c === ";") flush(";");
     else cur += c;
   }
   if (before !== null && !cur.trim()) {

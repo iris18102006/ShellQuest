@@ -353,6 +353,35 @@ describe("variables", () => {
   });
 });
 
+describe("command substitution", () => {
+  const files = { "/home/user/a.txt": "x\ny\nz\n", "/home/user/b.txt": "1\n" };
+  it("replaces $(cmd) with its output", () => {
+    const s = sh(files);
+    expect(s.run("echo files: $(ls)").out).toBe("files: a.txt b.txt\n");
+    expect(s.run('echo "lines: $(cat a.txt | wc -l)"').out).toBe("lines: 3\n");
+  });
+  it("works in a variable assignment", () => {
+    const s = sh(files);
+    s.run("N=$(cat a.txt | wc -l)");
+    expect(s.run("echo $N").out).toBe("3\n");
+  });
+  it("feeds one command's output to another", () => {
+    const s = sh(files);
+    expect(s.run("cat $(echo b.txt)").out).toBe("1\n");
+    expect(s.run("head -n $(cat b.txt) a.txt").out).toBe("x\n");
+  });
+  it("is not expanded inside single quotes", () => {
+    expect(sh(files).run("echo '$(ls)'").out).toBe("$(ls)\n");
+  });
+  it("keeps ; and && inside the parentheses together", () => {
+    expect(sh(files).run("echo $(echo a; echo b) end").out).toBe("a b end\n");
+  });
+  it("shows errors from the inner command and reports a missing )", () => {
+    expect(sh(files).run("echo $(cat nope.txt)").err).toContain("No such file");
+    expect(sh(files).run("echo $(ls").err).toContain("unterminated");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
