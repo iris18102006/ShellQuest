@@ -716,6 +716,13 @@ function parseAwk(src: string): AwkProg | string {
     items.push(r);
   }
 
+  const cond = parseAwkCond(condSrc);
+  if (typeof cond === "string") return cond;
+  return { cond, items };
+}
+
+/** Turns the part before the braces ('$3 > 100', '/re/', '$2 ~ /re/', or nothing) into a test. */
+function parseAwkCond(condSrc: string): AwkProg["cond"] | string {
   let cond: AwkProg["cond"] = () => true;
   let m: RegExpExecArray | null;
   if (!condSrc) {
@@ -744,5 +751,5 @@ function parseAwk(src: string): AwkProg | string {
       return op === "==" ? x === y : op === "!=" ? x !== y : op === ">" ? x > y : op === "<" ? x < y : op === ">=" ? x >= y : x <= y;
     };
   } else return `can't understand condition '${condSrc}'`;
-  return { cond, items };
+  return cond;
 }
