@@ -77,6 +77,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 46 | Skip the header | `tail -n +2` |
 | 47 | Newest first | `tac` |
 | 48 | Only the repeats | `sort`, `uniq -d` |
+| 49 | First three letters | `cut -c` |
 
 ## Supported commands
 
