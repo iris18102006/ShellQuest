@@ -75,6 +75,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 44 | Sort by column | `sort -t, -k2 -nr` |
 | 45 | Boss: the breach report | `grep -r`, `awk`, `cut`, `sort -u`, `>` |
 | 46 | Skip the header | `tail -n +2` |
+| 47 | Newest first | `tac` |
 
 ## Supported commands
 
