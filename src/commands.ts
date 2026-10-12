@@ -340,6 +340,36 @@ export const commands: Record<string, Command> = {
     return { out: nl(out), err };
   },
 
+  comm(ctx, args, stdin) {
+    const hide = new Set<string>();
+    const files: string[] = [];
+    for (const a of args) {
+      if (/^-[123]+$/.test(a)) for (const c of a.slice(1)) hide.add(c);
+      else files.push(a);
+    }
+    if (files.length !== 2) return fail("usage: comm [-123] FILE1 FILE2");
+    const read = (f: string): { ls: string[]; err?: string } => {
+      if (f === "-") return { ls: lines(stdin ?? "") };
+      const { texts, err } = readInputs(ctx, [f], null, "comm");
+      return { ls: texts.length ? lines(texts[0].text) : [], err };
+    };
+    const [a, b] = [read(files[0]), read(files[1])];
+    const err = [a.err, b.err].filter(Boolean).join("\n") || undefined;
+    if (err) return { out: "", err };
+    // Column 2 and 3 are indented by one tab per visible column to their left.
+    const tab2 = hide.has("1") ? "" : "\t";
+    const tab3 = (hide.has("1") ? "" : "\t") + (hide.has("2") ? "" : "\t");
+    const out: string[] = [];
+    let i = 0, j = 0;
+    while (i < a.ls.length || j < b.ls.length) {
+      const x = a.ls[i], y = b.ls[j];
+      if (y === undefined || (x !== undefined && x < y)) { if (!hide.has("1")) out.push(x); i++; }
+      else if (x === undefined || y < x) { if (!hide.has("2")) out.push(tab2 + y); j++; }
+      else { if (!hide.has("3")) out.push(tab3 + x); i++; j++; }
+    }
+    return { out: nl(out) };
+  },
+
   tee(ctx, args, stdin) {
     const { flags, rest } = split(args);
     const text = stdin ?? "";
