@@ -421,6 +421,34 @@ describe("awk END blocks", () => {
   });
 });
 
+describe("diff", () => {
+  const run = (a: string, b: string, cmd = "diff a.txt b.txt") =>
+    sh({ "/home/user/a.txt": a, "/home/user/b.txt": b }).run(cmd);
+  it("prints nothing for identical files", () => {
+    expect(run("x\ny\n", "x\ny\n").out).toBe("");
+  });
+  it("shows a changed line", () => {
+    expect(run("a\nb\nc\n", "a\nB\nc\n").out).toBe("2c2\n< b\n---\n> B\n");
+  });
+  it("shows an added line", () => {
+    expect(run("a\nc\n", "a\nb\nc\n").out).toBe("1a2\n> b\n");
+  });
+  it("shows a deleted line", () => {
+    expect(run("a\nb\nc\n", "a\nc\n").out).toBe("2d1\n< b\n");
+  });
+  it("groups neighbouring changes and uses ranges", () => {
+    expect(run("a\nb\nc\nd\n", "a\nX\nY\nZ\nd\n").out).toBe("2,3c2,4\n< b\n< c\n---\n> X\n> Y\n> Z\n");
+  });
+  it("reports several separate hunks", () => {
+    expect(run("1\n2\n3\n4\n5\n", "1\nX\n3\n4\nY\n").out).toBe("2c2\n< 2\n---\n> X\n5c5\n< 5\n---\n> Y\n");
+  });
+  it("handles an empty file and missing files", () => {
+    expect(run("", "a\n").out).toBe("0a1\n> a\n");
+    expect(run("a\n", "a\n", "diff a.txt nope.txt").err).toContain("No such file");
+    expect(run("a\n", "a\n", "diff a.txt").err).toContain("usage");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
