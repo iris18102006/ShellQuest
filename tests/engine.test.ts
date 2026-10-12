@@ -238,6 +238,26 @@ describe("cut -c", () => {
   });
 });
 
+describe("comm", () => {
+  const files = { "/home/user/a.txt": "ana\nbo\ncy\n", "/home/user/b.txt": "bo\ncy\ndee\n" };
+  it("shows three columns by default", () => {
+    expect(sh(files).run("comm a.txt b.txt").out).toBe("ana\n\t\tbo\n\t\tcy\n\tdee\n");
+  });
+  it("-12 shows only lines in both", () => {
+    expect(sh(files).run("comm -12 a.txt b.txt").out).toBe("bo\ncy\n");
+  });
+  it("-23 shows only lines unique to the first file", () => {
+    expect(sh(files).run("comm -23 a.txt b.txt").out).toBe("ana\n");
+  });
+  it("-13 shows only lines unique to the second file", () => {
+    expect(sh(files).run("comm -13 a.txt b.txt").out).toBe("dee\n");
+  });
+  it("reports missing files and wrong usage", () => {
+    expect(sh(files).run("comm a.txt nope.txt").err).toContain("No such file");
+    expect(sh(files).run("comm a.txt").err).toContain("usage");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
