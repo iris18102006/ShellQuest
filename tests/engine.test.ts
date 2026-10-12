@@ -224,6 +224,20 @@ describe("uniq -d / -u", () => {
   });
 });
 
+describe("cut -c", () => {
+  it("cuts by character position", () => {
+    const s = sh({ "/home/user/a.txt": "abcdef\nxyz\n" });
+    expect(s.run("cut -c1-3 a.txt").out).toBe("abc\nxyz\n");
+    expect(s.run("cut -c2 a.txt").out).toBe("b\ny\n");
+    expect(s.run("cut -c1,4 a.txt").out).toBe("ad\nx\n");
+    expect(s.run("cat a.txt | cut -c5-9").out).toBe("ef\n\n");
+  });
+  it("still cuts fields with -d and -f", () => {
+    const s = sh({ "/home/user/a.csv": "a,b,c\n" });
+    expect(s.run("cut -d, -f2 a.csv").out).toBe("b\n");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {

@@ -84,7 +84,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 
 Plus pipes (`|`), redirects (`>` `>>` `<`), quotes, and `*` / `?` globs.
 
-`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`.
+`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions.
 
 ## Run it locally
 
