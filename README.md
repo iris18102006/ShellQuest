@@ -83,11 +83,11 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 
 ## Supported commands
 
-`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `tac` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `comm` `whoami`
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `tac` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `comm` `xargs` `whoami`
 
 Plus pipes (`|`), redirects (`>` `>>` `<`), quotes, and `*` / `?` globs.
 
-`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns.
+`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns. `xargs` turns what it receives on stdin into arguments for the command after it.
 
 ## Run it locally
 
