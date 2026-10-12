@@ -449,19 +449,25 @@ export const commands: Record<string, Command> = {
     }
     const [src, ...files] = rest;
     if (src === undefined) return fail("usage: awk [-F SEP] 'PROGRAM' [FILE...]");
-    const prog = parseAwk(src);
-    if (typeof prog === "string") return fail("awk: " + prog);
     if (sep === "\\t") sep = "\t";
+    const endProg = parseAwkEnd(src);
+    if (typeof endProg === "string") return fail("awk: " + endProg);
+    const prog = endProg ? null : parseAwk(src);
+    if (typeof prog === "string") return fail("awk: " + prog);
     const { texts, err } = readInputs(ctx, files, stdin, "awk");
     const out: string[] = [];
     let nr = 0;
+    const vars: AwkVars = {};
     for (const t of texts) {
       for (const line of lines(t.text)) {
         nr++;
         const f = sep !== null ? line.split(sep) : line.trim() === "" ? [] : line.trim().split(/\s+/);
-        if (prog.cond(line, f, nr)) out.push(prog.items.map((it) => it(line, f, nr)).join(" "));
+        if (endProg) {
+          if (endProg.cond(line, f, nr)) endProg.body.forEach((st) => st({ l: line, f, nr }, vars));
+        } else if (prog && prog.cond(line, f, nr)) out.push(prog.items.map((it) => it(line, f, nr)).join(" "));
       }
     }
+    if (endProg) out.push(endProg.print.map((e) => fmtAwk(e({ l: "", f: [], nr }, vars))).join(" "));
     return { out: nl(out), err };
   },
 };
@@ -719,6 +725,112 @@ function parseAwk(src: string): AwkProg | string {
   const cond = parseAwkCond(condSrc);
   if (typeof cond === "string") return cond;
   return { cond, items };
+}
+
+// ---------- awk END programs: '{ s += $2 } END { print s }' ----------
+type AwkVars = Record<string, number | string>;
+type AwkRec = { l: string; f: string[]; nr: number };
+type AwkExpr = (r: AwkRec, v: AwkVars) => number | string;
+interface EndProg { cond: AwkProg["cond"]; body: ((r: AwkRec, v: AwkVars) => void)[]; print: AwkExpr[] }
+
+const awkNum = (x: number | string): number => (typeof x === "number" ? x : parseFloat(x) || 0);
+/** awk prints whole numbers as-is and everything else with up to 6 significant digits. */
+const fmtAwk = (x: number | string): string =>
+  typeof x === "number" ? (Number.isInteger(x) ? String(x) : String(parseFloat(x.toPrecision(6)))) : x;
+
+/** Finds the last + - (or * /) that is not inside quotes or parentheses. */
+function lastOperator(s: string, ops: string): number {
+  let depth = 0;
+  let q = false;
+  let found = -1;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '"') q = !q;
+    else if (q) continue;
+    else if (c === "(") depth++;
+    else if (c === ")") depth--;
+    else if (depth === 0 && ops.includes(c) && i > 0 && !/[-+*/(]/.test(s.slice(0, i).trimEnd().slice(-1) || "(")) found = i;
+  }
+  return found;
+}
+
+function parseAwkExpr(src: string): AwkExpr | null {
+  const s = src.trim();
+  if (!s) return null;
+  for (const ops of ["+-", "*/"]) {
+    const i = lastOperator(s, ops);
+    if (i < 0) continue;
+    const left = parseAwkExpr(s.slice(0, i));
+    const right = parseAwkExpr(s.slice(i + 1));
+    if (!left || !right) return null;
+    const op = s[i];
+    return (r, v) => {
+      const a = awkNum(left(r, v)), b = awkNum(right(r, v));
+      return op === "+" ? a + b : op === "-" ? a - b : op === "*" ? a * b : b === 0 ? 0 : a / b;
+    };
+  }
+  if (s.startsWith("(") && s.endsWith(")")) return parseAwkExpr(s.slice(1, -1));
+  if (/^[A-Za-z_]\w*$/.test(s) && s !== "NR" && s !== "NF") return (_r, v) => v[s] ?? "";
+  const ref = parseRef(s);
+  if (!ref) return null;
+  return (r) => (isNum(ref(r.l, r.f, r.nr)) && !/^"/.test(s) ? parseFloat(ref(r.l, r.f, r.nr)) : ref(r.l, r.f, r.nr));
+}
+
+function parseAwkStatement(src: string): ((r: AwkRec, v: AwkVars) => void) | string {
+  let m: RegExpExecArray | null;
+  if ((m = /^([A-Za-z_]\w*)\s*(\+\+|--)$/.exec(src))) {
+    const [, name, op] = m;
+    return (_r, v) => { v[name] = awkNum(v[name] ?? 0) + (op === "++" ? 1 : -1); };
+  }
+  if ((m = /^([A-Za-z_]\w*)\s*(\+=|-=|\*=|\/=|=)\s*(.+)$/.exec(src))) {
+    const [, name, op, rhs] = m;
+    const e = parseAwkExpr(rhs);
+    if (!e) return `can't understand '${rhs.trim()}'`;
+    return (r, v) => {
+      const val = e(r, v);
+      if (op === "=") v[name] = val;
+      else {
+        const a = awkNum(v[name] ?? 0), b = awkNum(val);
+        v[name] = op === "+=" ? a + b : op === "-=" ? a - b : op === "*=" ? a * b : b === 0 ? 0 : a / b;
+      }
+    };
+  }
+  return `can't understand '${src}'`;
+}
+
+/** null if the program has no END block, an error string if it is broken, or the parsed program. */
+function parseAwkEnd(src: string): EndProg | string | null {
+  const idx = src.search(/\bEND\s*\{/);
+  if (idx < 0) return null;
+  const head = src.slice(0, idx).trim();
+  const tail = src.slice(idx).replace(/^END\s*/, "").trim();
+  const endM = /^\{([\s\S]*)\}$/.exec(tail);
+  if (!endM) return "syntax error: END needs { ... }";
+  const printM = /^\s*print(?:\s+([\s\S]*))?$/.exec(endM[1]);
+  if (!printM) return "only 'print' is supported inside END";
+  const print: AwkExpr[] = [];
+  for (const it of splitItems((printM[1] ?? "").trim())) {
+    const e = parseAwkExpr(it);
+    if (!e) return `can't understand '${it.trim()}'`;
+    print.push(e);
+  }
+
+  let condSrc = "";
+  const body: EndProg["body"] = [];
+  if (head) {
+    const ob = head.indexOf("{");
+    const cb = head.lastIndexOf("}");
+    if (ob < 0 || cb < ob) return "syntax error: expected { ... } before END";
+    condSrc = head.slice(0, ob).trim();
+    for (const st of head.slice(ob + 1, cb).split(";").map((x) => x.trim()).filter(Boolean)) {
+      const parsed = parseAwkStatement(st);
+      if (typeof parsed === "string") return parsed;
+      body.push(parsed);
+    }
+  }
+  const cond = parseAwkCond(condSrc);
+  if (typeof cond === "string") return cond;
+  return { cond, body, print };
 }
 
 /** Turns the part before the braces ('$3 > 100', '/re/', '$2 ~ /re/', or nothing) into a test. */

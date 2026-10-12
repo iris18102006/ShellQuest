@@ -93,7 +93,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 
 Plus pipes (`|`), redirects (`>` `>>` `<`), chaining (`&&` runs the next command only if the last one worked, `;` always runs it), variables (`NAME=value`, then `$NAME` or `${NAME}`, plus `$USER` and `$HOME`), quotes, and `*` / `?` globs. Single quotes keep `$` literal, double quotes expand it. `$(command)` is replaced by whatever that command prints.
 
-`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns. `xargs` turns what it receives on stdin into arguments for the command after it.
+`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. It also does totals with an `END` block: `{ s += $2 } END { print s }`, counters like `n++`, `NR`, and simple math such as `s / NR`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns. `xargs` turns what it receives on stdin into arguments for the command after it.
 
 ## Run it locally
 
@@ -164,7 +164,8 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 - [ ] Tab completion
 - [x] `cp`, `mv`, `cut`
 - [x] `tr`, `sed`, `awk`-lite, `tee`, `grep -r`, `cp -r`
-- [ ] More commands: `tar`, `diff`, `sort -k` ranges, `awk` sums (`END`)
+- [ ] More commands: `tar`, `diff`, `sort -k` ranges
+- [x] `awk` sums (`END`)
 - [ ] Levels on variables, `&&`, and shell scripts
 - [ ] Per-command help
 - [ ] Shareable links to a specific level
