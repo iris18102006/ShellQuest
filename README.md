@@ -90,6 +90,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 59 | The average | `awk` `END`, `NR`, `/` |
 | 60 | Count the big ones | `awk` condition, `n++`, `END` |
 | 61 | What changed? | `diff`, `grep` |
+| 62 | Boss: the quarterly report | `awk` `END`, `sales/*.csv`, `>` |
 
 ## Supported commands
 
@@ -136,13 +137,13 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l62.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l63.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
 
 export const level: Level = {
-  title: "Level 62: Your title",
+  title: "Level 63: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
