@@ -320,16 +320,19 @@ export const commands: Record<string, Command> = {
   cut(ctx, args, stdin) {
     let delim = "\t";
     let fields: number[] = [];
+    let chars: number[] = [];
     const files: string[] = [];
     for (let i = 0; i < args.length; i++) {
       const a = args[i];
       if (a.startsWith("-d")) delim = a.length > 2 ? a.slice(2) : args[++i] ?? delim;
       else if (a.startsWith("-f")) fields = parseFields(a.length > 2 ? a.slice(2) : args[++i] ?? "");
+      else if (a.startsWith("-c")) chars = parseFields(a.length > 2 ? a.slice(2) : args[++i] ?? "");
       else files.push(a);
     }
-    if (!fields.length) return fail("cut: you must specify a list of fields (-f)");
+    if (!fields.length && !chars.length) return fail("cut: you must specify a list of fields (-f) or characters (-c)");
     const { texts, err } = readInputs(ctx, files, stdin, "cut");
     const out = texts.flatMap((t) => lines(t.text)).map((line) => {
+      if (chars.length) return chars.filter((c) => c <= line.length).map((c) => line[c - 1]).join("");
       if (!line.includes(delim)) return line;
       const parts = line.split(delim);
       return fields.filter((f) => f <= parts.length).map((f) => parts[f - 1]).join(delim);
