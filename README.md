@@ -85,6 +85,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 54 | Two jobs, one line | `&&` |
 | 55 | Say it with a variable | `NAME=value`, `$NAME` |
 | 56 | Name it once | `$VAR` in a pipeline, `grep -c` |
+| 57 | A command inside a command | `$(...)` |
 
 ## Supported commands
 
@@ -131,13 +132,13 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l57.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l58.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
 
 export const level: Level = {
-  title: "Level 57: Your title",
+  title: "Level 58: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
