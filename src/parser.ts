@@ -7,7 +7,14 @@ export class ParseError extends Error {}
 
 type Tok = { t: "word"; v: string; q: boolean } | { t: "op"; v: "|" | ">" | ">>" | "<" };
 
-export function tokenize(line: string): Tok[] {
+/** Reads $NAME or ${NAME} at line[i] (which is the `$`). Returns the variable name and where it ends. */
+function readVar(line: string, i: number): { name: string; end: number } | null {
+  const m = /^\$(?:\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))/.exec(line.slice(i));
+  return m ? { name: m[1] ?? m[2], end: i + m[0].length } : null;
+}
+
+/** With `vars`, $NAME is expanded outside single quotes. Without it, `$` is left alone. */
+export function tokenize(line: string, vars?: Record<string, string>): Tok[] {
   const toks: Tok[] = [];
   let cur = "";
   let has = false;
@@ -17,7 +24,19 @@ export function tokenize(line: string): Tok[] {
 
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-    if (quote) {
+    const v = vars && c === "$" && quote !== "'" ? readVar(line, i) : null;
+    if (v) {
+      const val = vars![v.name] ?? "";
+      if (quote) cur += val;
+      else {
+        // Unquoted values are split on whitespace, like a real shell does.
+        val.split(/\s+/).forEach((piece, n) => {
+          if (n > 0) push();
+          if (piece) { cur += piece; has = true; }
+        });
+      }
+      i = v.end - 1;
+    } else if (quote) {
       if (c === quote) quote = null;
       else cur += c;
     } else if (c === "'" || c === '"') {
@@ -41,8 +60,8 @@ export function tokenize(line: string): Tok[] {
   return toks;
 }
 
-export function parse(line: string): Cmd[] {
-  const toks = tokenize(line);
+export function parse(line: string, vars?: Record<string, string>): Cmd[] {
+  const toks = tokenize(line, vars);
   const pipeline: Cmd[] = [];
   let cmd: Cmd = { argv: [], raw: [] };
 

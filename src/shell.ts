@@ -5,7 +5,12 @@ import { FS } from "./vfs";
 export interface RunResult { out: string; err: string }
 
 export class Shell implements Ctx {
-  constructor(public fs: FS, public cwd = "/home/user", public user = "user") {}
+  /** Shell variables: NAME=value sets one, $NAME reads it. */
+  vars: Record<string, string>;
+
+  constructor(public fs: FS, public cwd = "/home/user", public user = "user") {
+    this.vars = { USER: user, HOME: `/home/${user}` };
+  }
 
   setCwd(p: string) { this.cwd = p; }
 
@@ -53,8 +58,16 @@ export class Shell implements Ctx {
 
   private runPipeline(line: string): RunResult {
     let pipeline: Cmd[];
-    try { pipeline = parse(line); }
+    try { pipeline = parse(line, this.vars); }
     catch (e) { return { out: "", err: `shell: ${(e as ParseError).message}\n` }; }
+
+    // NAME=value on its own is an assignment, not a command.
+    const assign = pipeline.length === 1 && pipeline[0].argv.length === 1 && !pipeline[0].redirect && !pipeline[0].input
+      ? /^([A-Za-z_]\w*)=([\s\S]*)$/.exec(pipeline[0].argv[0]) : null;
+    if (assign) {
+      this.vars[assign[1]] = assign[2];
+      return { out: "", err: "" };
+    }
 
     let stdin: string | null = null;
     const errs: string[] = [];
