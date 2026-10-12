@@ -285,6 +285,36 @@ describe("xargs", () => {
   });
 });
 
+describe("chaining with && and ;", () => {
+  it("&& runs the next command only if the last one worked", () => {
+    const s = sh({ "/home/user/a.txt": "hi\n" });
+    expect(s.run("cat a.txt && echo done").out).toBe("hi\ndone\n");
+    const bad = s.run("cat nope.txt && echo done");
+    expect(bad.out).toBe("");
+    expect(bad.err).toContain("No such file");
+  });
+  it("; always runs the next command", () => {
+    const s = sh({ "/home/user/a.txt": "hi\n" });
+    const r = s.run("cat nope.txt ; echo done");
+    expect(r.out).toBe("done\n");
+    expect(r.err).toContain("No such file");
+  });
+  it("keeps state between the parts, like cd", () => {
+    const s = sh({ "/home/user/d/x.txt": "x\n" });
+    expect(s.run("cd d && ls").out).toBe("x.txt\n");
+    expect(s.cwd).toBe("/home/user/d");
+  });
+  it("ignores && and ; inside quotes and still pipes", () => {
+    const s = sh({ "/home/user/a.txt": "a;b\nc&&d\n" });
+    expect(s.run('grep ";" a.txt | wc -l').out).toBe("1\n");
+    expect(s.run('echo "x && y"').out).toBe("x && y\n");
+  });
+  it("reports dangling operators", () => {
+    expect(sh().run("echo a &&").err).toContain("syntax error");
+    expect(sh().run("&& echo a").err).toContain("syntax error");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {

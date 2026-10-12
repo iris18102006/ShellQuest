@@ -69,3 +69,29 @@ export function parse(line: string): Cmd[] {
   pipeline.push(cmd);
   return pipeline;
 }
+
+/** Split a line on `&&` and `;` (outside quotes). Each part remembers the operator that came BEFORE it. */
+export function splitChain(line: string): { text: string; before: "&&" | ";" | null }[] {
+  const parts: { text: string; before: "&&" | ";" | null }[] = [];
+  let cur = "";
+  let quote: string | null = null;
+  let before: "&&" | ";" | null = null;
+  const flush = (op: "&&" | ";") => {
+    if (!cur.trim()) throw new ParseError(`syntax error near '${op}'`);
+    parts.push({ text: cur, before });
+    cur = "";
+    before = op;
+  };
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quote) { if (c === quote) quote = null; cur += c; }
+    else if (c === "'" || c === '"') { quote = c; cur += c; }
+    else if (c === "&" && line[i + 1] === "&") { flush("&&"); i++; }
+    else if (c === ";") flush(";");
+    else cur += c;
+  }
+  if (before !== null && !cur.trim()) {
+    if (before === "&&") throw new ParseError("syntax error: missing command after '&&'");
+  } else if (cur.trim() || parts.length === 0) parts.push({ text: cur, before });
+  return parts;
+}

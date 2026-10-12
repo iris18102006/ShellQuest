@@ -1,5 +1,5 @@
 import { commands, can, type Ctx } from "./commands";
-import { parse, ParseError, type Cmd } from "./parser";
+import { parse, splitChain, ParseError, type Cmd } from "./parser";
 import { FS } from "./vfs";
 
 export interface RunResult { out: string; err: string }
@@ -33,7 +33,25 @@ export class Shell implements Ctx {
     return out;
   }
 
+  /** Runs a whole line: pipelines joined by `&&` (stop on failure) or `;` (always continue). */
   run(line: string): RunResult {
+    let parts: ReturnType<typeof splitChain>;
+    try { parts = splitChain(line); }
+    catch (e) { return { out: "", err: `shell: ${(e as ParseError).message}\n` }; }
+    let out = "";
+    let err = "";
+    let lastFailed = false;
+    for (const part of parts) {
+      if (part.before === "&&" && lastFailed) continue;
+      const r = this.runPipeline(part.text);
+      out += r.out;
+      err += r.err;
+      lastFailed = r.err !== "";
+    }
+    return { out, err };
+  }
+
+  private runPipeline(line: string): RunResult {
     let pipeline: Cmd[];
     try { pipeline = parse(line); }
     catch (e) { return { out: "", err: `shell: ${(e as ParseError).message}\n` }; }
