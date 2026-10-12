@@ -382,6 +382,45 @@ describe("command substitution", () => {
   });
 });
 
+describe("awk END blocks", () => {
+  const sales = "north,120\nsouth,80\nnorth,50\neast,10\n";
+  const s = () => sh({ "/home/user/sales.csv": sales, "/home/user/empty.txt": "" });
+  it("sums a column", () => {
+    expect(s().run("awk -F, '{ s += $2 } END { print s }' sales.csv").out).toBe("260\n");
+    expect(s().run("awk -F, '{s+=$2} END {print s}' sales.csv").out).toBe("260\n");
+  });
+  it("counts lines with n++ and with NR", () => {
+    expect(s().run("awk '{ n++ } END { print n }' sales.csv").out).toBe("4\n");
+    expect(s().run("awk 'END { print NR }' sales.csv").out).toBe("4\n");
+  });
+  it("only adds lines that pass the condition", () => {
+    expect(s().run(`awk -F, '$1 == "north" { s += $2 } END { print s }' sales.csv`).out).toBe("170\n");
+    expect(s().run("awk -F, '$2 > 60 { n++ } END { print n }' sales.csv").out).toBe("2\n");
+    expect(s().run("awk '/north/ { n++ } END { print n }' sales.csv").out).toBe("2\n");
+  });
+  it("does math in the END print, with up to 6 significant digits", () => {
+    expect(s().run("awk -F, '{ s += $2 } END { print s / NR }' sales.csv").out).toBe("65\n");
+    expect(s().run("awk -F, '{ s += $2 } END { print s / 3 }' sales.csv").out).toBe("86.6667\n");
+    expect(s().run("awk -F, '{ s += $2 } END { print s * 2 - 10 }' sales.csv").out).toBe("510\n");
+  });
+  it("prints labels, several items and works in a pipe", () => {
+    expect(s().run(`awk -F, '{ s += $2 } END { print "total:", s }' sales.csv`).out).toBe("total: 260\n");
+    expect(s().run("cat sales.csv | awk -F, '{ s += $2 } END { print s }'").out).toBe("260\n");
+  });
+  it("an unset variable prints empty, and an empty file gives zero records", () => {
+    expect(s().run("awk '{ n++ } END { print n }' empty.txt").out).toBe("\n");
+    expect(s().run("awk 'END { print NR }' empty.txt").out).toBe("0\n");
+  });
+  it("gives helpful errors", () => {
+    expect(s().run("awk '{ s += } END { print s }' sales.csv").err).toContain("awk:");
+    expect(s().run("awk '{ s += $2 } END { s }' sales.csv").err).toContain("only 'print'");
+    expect(s().run("awk '{ s += $2 } END' sales.csv").err).toContain("awk:");
+  });
+  it("normal one-liners still work", () => {
+    expect(s().run("awk -F, '{print $1}' sales.csv").out).toBe("north\nsouth\nnorth\neast\n");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {

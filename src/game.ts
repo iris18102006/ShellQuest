@@ -5,7 +5,7 @@ import { levels } from "./levels";
 export interface Turn { out: string; err: string; clear?: boolean; levelChanged?: boolean }
 
 const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-cdu]
-          find [-name -type] chmod mkdir touch rm cp [-r] mv cut [-dfc] tr [-ds] sed [-ni] awk [-F]
+          find [-name -type] chmod mkdir touch rm cp [-r] mv cut [-dfc] tr [-ds] sed [-ni] awk [-F] [END]
           tee [-a] comm [-123] xargs whoami
 You can use pipes (|), redirects (> >> <), chaining (&& ;), variables (NAME=value, $NAME), $(command), quotes and * globs.
 Game: hint  level  reset  clear  help
