@@ -180,7 +180,8 @@ export const commands: Record<string, Command> = {
       if (last && last.line === l) last.n++;
       else groups.push({ line: l, n: 1 });
     }
-    return { out: nl(groups.map((g) => (flags.has("c") ? `${String(g.n).padStart(7)} ${g.line}` : g.line))), err };
+    const shown = groups.filter((g) => (flags.has("d") ? g.n > 1 : flags.has("u") ? g.n === 1 : true));
+    return { out: nl(shown.map((g) => (flags.has("c") ? `${String(g.n).padStart(7)} ${g.line}` : g.line))), err };
   },
 
   grep(ctx, args, stdin) {

@@ -4,7 +4,7 @@ import { levels } from "./levels";
 
 export interface Turn { out: string; err: string; clear?: boolean; levelChanged?: boolean }
 
-const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-c]
+const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-cdu]
           find [-name -type] chmod mkdir touch rm cp [-r] mv cut tr [-ds] sed [-ni] awk [-F]
           tee [-a] whoami
 You can use pipes (|), redirects (> >> <), quotes and * globs.
