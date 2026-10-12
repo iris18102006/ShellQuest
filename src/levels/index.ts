@@ -45,9 +45,10 @@ import { level as l42 } from "./l42";
 import { level as l43 } from "./l43";
 import { level as l44 } from "./l44";
 import { level as l45 } from "./l45";
+import { level as l46 } from "./l46";
 
 export type { Level, Attempt } from "./types";
 
 export const levels: Level[] = [
-  l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32, l33, l34, l35, l36, l37, l38, l39, l40, l41, l42, l43, l44, l45,
+  l01, l02, l03, l04, l05, l06, l07, l08, l09, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32, l33, l34, l35, l36, l37, l38, l39, l40, l41, l42, l43, l44, l45, l46,
 ];
