@@ -81,6 +81,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 50 | In both lists | `comm -12` |
 | 51 | Who ghosted? | `comm -23` |
 | 52 | Sweep the temp files | `find`, `xargs`, `rm` |
+| 53 | Boss: the banned list | `sort -u`, `comm -12`, `>` |
 
 ## Supported commands
 
