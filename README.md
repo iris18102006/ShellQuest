@@ -78,6 +78,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 47 | Newest first | `tac` |
 | 48 | Only the repeats | `sort`, `uniq -d` |
 | 49 | First three letters | `cut -c` |
+| 50 | In both lists | `comm -12` |
 
 ## Supported commands
 
