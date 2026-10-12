@@ -108,9 +108,13 @@ export const commands: Record<string, Command> = {
   },
 
   tail(ctx, args, stdin) {
-    const { n, files } = countArg(args, 10);
+    // tail -n +N means "start at line N", so the first N-1 lines are skipped.
+    const from = args.findIndex((a, i) => /^\+\d+$/.test(a) && args[i - 1] === "-n");
+    const fromN = from >= 0 ? parseInt(args[from].slice(1), 10) : null;
+    const { n, files } = countArg(fromN === null ? args : args.filter((_, i) => i !== from && i !== from - 1), 10);
     const { texts, err } = readInputs(ctx, files, stdin, "tail");
-    return { out: nl(texts.flatMap((t) => lines(t.text).slice(-n))), err };
+    const pick = (ls: string[]) => (fromN === null ? ls.slice(-n) : ls.slice(Math.max(fromN - 1, 0)));
+    return { out: nl(texts.flatMap((t) => pick(lines(t.text)))), err };
   },
 
   wc(ctx, args, stdin) {

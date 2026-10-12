@@ -186,6 +186,20 @@ describe("< input redirect", () => {
   });
 });
 
+describe("tail", () => {
+  it("tail -n +N starts at line N", () => {
+    const s = sh({ "/home/user/a.csv": "h\n1\n2\n3\n" });
+    expect(s.run("tail -n +2 a.csv").out).toBe("1\n2\n3\n");
+    expect(s.run("tail -n +3 a.csv").out).toBe("2\n3\n");
+    expect(s.run("cat a.csv | tail -n +2").out).toBe("1\n2\n3\n");
+  });
+  it("tail -n N still shows the last N lines", () => {
+    const s = sh({ "/home/user/a.csv": "h\n1\n2\n3\n" });
+    expect(s.run("tail -n 2 a.csv").out).toBe("2\n3\n");
+    expect(s.run("tail -1 a.csv").out).toBe("3\n");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
