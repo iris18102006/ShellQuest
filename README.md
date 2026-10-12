@@ -83,6 +83,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 52 | Sweep the temp files | `find`, `xargs`, `rm` |
 | 53 | Boss: the banned list | `sort -u`, `comm -12`, `>` |
 | 54 | Two jobs, one line | `&&` |
+| 55 | Say it with a variable | `NAME=value`, `$NAME` |
 
 ## Supported commands
 
@@ -129,13 +130,13 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l55.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l56.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
 
 export const level: Level = {
-  title: "Level 55: Your title",
+  title: "Level 56: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
