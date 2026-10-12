@@ -117,6 +117,11 @@ export const commands: Record<string, Command> = {
     return { out: nl(texts.flatMap((t) => pick(lines(t.text)))), err };
   },
 
+  tac(ctx, args, stdin) {
+    const { texts, err } = readInputs(ctx, args, stdin, "tac");
+    return { out: nl(texts.flatMap((t) => lines(t.text).reverse())), err };
+  },
+
   wc(ctx, args, stdin) {
     const { flags, rest } = split(args);
     const { texts, err } = readInputs(ctx, rest, stdin, "wc");
