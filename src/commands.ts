@@ -370,6 +370,16 @@ export const commands: Record<string, Command> = {
     return { out: nl(out) };
   },
 
+  xargs(ctx, args, stdin) {
+    // Turns whitespace-separated words from stdin into arguments for another command.
+    const [name = "echo", ...fixed] = args;
+    const cmd = commands[name];
+    if (!cmd) return fail(`xargs: ${name}: No such file or directory`);
+    const items = (stdin ?? "").split(/\s+/).filter(Boolean);
+    if (!items.length && name === "rm") return ok();
+    return cmd(ctx, [...fixed, ...items], null);
+  },
+
   tee(ctx, args, stdin) {
     const { flags, rest } = split(args);
     const text = stdin ?? "";

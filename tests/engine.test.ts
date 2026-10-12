@@ -258,6 +258,33 @@ describe("comm", () => {
   });
 });
 
+describe("xargs", () => {
+  const files = {
+    "/home/user/a.tmp": "1\n", "/home/user/b.tmp": "2\n", "/home/user/keep.txt": "3\n",
+    "/home/user/sub/c.tmp": "4\n",
+  };
+  it("feeds piped words to another command as arguments", () => {
+    const s = sh(files);
+    expect(s.run("find . -name '*.tmp' | xargs rm").err).toBe("");
+    expect(s.run("find . -name '*.tmp'").out).toBe("");
+    expect(s.run("cat keep.txt").out).toBe("3\n");
+  });
+  it("keeps the extra arguments you give it", () => {
+    const s = sh(files);
+    expect(s.run("echo a.tmp b.tmp | xargs cat").out).toBe("1\n2\n");
+    expect(s.run("echo a.tmp b.tmp | xargs wc -l").out).toBe("1 a.tmp\n1 b.tmp\n");
+  });
+  it("defaults to echo and rejects unknown commands", () => {
+    const s = sh(files);
+    expect(s.run("echo hi there | xargs").out).toBe("hi there\n");
+    expect(s.run("echo x | xargs nope").err).toContain("No such file or directory");
+  });
+  it("does nothing for rm when nothing was piped in", () => {
+    const s = sh(files);
+    expect(s.run("find . -name '*.zzz' | xargs rm").err).toBe("");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {

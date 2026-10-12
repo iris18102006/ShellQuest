@@ -6,7 +6,7 @@ export interface Turn { out: string; err: string; clear?: boolean; levelChanged?
 
 const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-cdu]
           find [-name -type] chmod mkdir touch rm cp [-r] mv cut [-dfc] tr [-ds] sed [-ni] awk [-F]
-          tee [-a] comm [-123] whoami
+          tee [-a] comm [-123] xargs whoami
 You can use pipes (|), redirects (> >> <), quotes and * globs.
 Game: hint  level  reset  clear  help
 `;
