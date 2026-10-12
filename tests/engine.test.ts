@@ -315,6 +315,44 @@ describe("chaining with && and ;", () => {
   });
 });
 
+describe("variables", () => {
+  it("sets and reads a variable", () => {
+    const s = sh();
+    expect(s.run("NAME=iris").err).toBe("");
+    expect(s.run("echo hi $NAME").out).toBe("hi iris\n");
+    expect(s.run("echo ${NAME}x").out).toBe("irisx\n");
+  });
+  it("expands inside double quotes but not single quotes", () => {
+    const s = sh();
+    s.run("NAME=iris");
+    expect(s.run('echo "hi $NAME"').out).toBe("hi iris\n");
+    expect(s.run("echo 'hi $NAME'").out).toBe("hi $NAME\n");
+  });
+  it("keeps spaces when the value was quoted", () => {
+    const s = sh();
+    s.run('MSG="hello big world"');
+    expect(s.run('echo "$MSG"').out).toBe("hello big world\n");
+    expect(s.run("echo $MSG | wc -w").out).toBe("3\n");
+  });
+  it("works as an argument, even in a chain", () => {
+    const s = sh({ "/home/user/log.txt": "ERROR a\nok\nERROR b\n" });
+    expect(s.run("LOG=log.txt; grep ERROR $LOG | wc -l").out).toBe("2\n");
+    expect(s.run("cd $HOME && pwd").out).toBe("/home/user\n");
+  });
+  it("unset variables vanish, and a lone $ or $1 stays as typed", () => {
+    const s = sh();
+    expect(s.run("echo a $NOPE b").out).toBe("a b\n");
+    expect(s.run("echo cost $5 $").out).toBe("cost $5 $\n");
+    expect(s.run("echo $USER").out).toBe("user\n");
+  });
+  it("later assignments overwrite earlier ones", () => {
+    const s = sh();
+    s.run("X=1");
+    s.run("X=2");
+    expect(s.run("echo $X").out).toBe("2\n");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
