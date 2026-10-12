@@ -209,6 +209,21 @@ describe("tac", () => {
   });
 });
 
+describe("uniq -d / -u", () => {
+  it("-d keeps only repeated lines, one copy each", () => {
+    const s = sh({ "/home/user/a.txt": "a\na\nb\nc\nc\nc\n" });
+    expect(s.run("uniq -d a.txt").out).toBe("a\nc\n");
+  });
+  it("-u keeps only lines that appear once", () => {
+    const s = sh({ "/home/user/a.txt": "a\na\nb\nc\nc\nc\n" });
+    expect(s.run("uniq -u a.txt").out).toBe("b\n");
+  });
+  it("works after sort", () => {
+    const s = sh({ "/home/user/a.txt": "x\ny\nx\nz\ny\n" });
+    expect(s.run("sort a.txt | uniq -d").out).toBe("x\ny\n");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
