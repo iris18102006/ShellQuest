@@ -74,6 +74,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 43 | Clone the folder | `cp -r` |
 | 44 | Sort by column | `sort -t, -k2 -nr` |
 | 45 | Boss: the breach report | `grep -r`, `awk`, `cut`, `sort -u`, `>` |
+| 46 | Skip the header | `tail -n +2` |
 
 ## Supported commands
 
