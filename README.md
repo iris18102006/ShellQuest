@@ -78,7 +78,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 
 ## Supported commands
 
-`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `whoami`
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `tac` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `whoami`
 
 Plus pipes (`|`), redirects (`>` `>>` `<`), quotes, and `*` / `?` globs.
 

@@ -200,6 +200,15 @@ describe("tail", () => {
   });
 });
 
+describe("tac", () => {
+  it("prints lines in reverse order", () => {
+    const s = sh({ "/home/user/a.txt": "1\n2\n3\n" });
+    expect(s.run("tac a.txt").out).toBe("3\n2\n1\n");
+    expect(s.run("cat a.txt | tac").out).toBe("3\n2\n1\n");
+    expect(s.run("tac nope.txt").err).toContain("No such file");
+  });
+});
+
 describe("levels are solvable", () => {
   levels.forEach((lvl, i) => {
     it(`${lvl.title}`, () => {
