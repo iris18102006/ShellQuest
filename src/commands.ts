@@ -380,6 +380,14 @@ export const commands: Record<string, Command> = {
     return cmd(ctx, [...fixed, ...items], null);
   },
 
+  diff(ctx, args) {
+    const { rest } = split(args);
+    if (rest.length !== 2) return fail("usage: diff FILE1 FILE2");
+    const { texts, err } = readInputs(ctx, rest, null, "diff");
+    if (err) return { out: "", err };
+    return { out: diffLines(lines(texts[0].text), lines(texts[1].text)) };
+  },
+
   tee(ctx, args, stdin) {
     const { flags, rest } = split(args);
     const text = stdin ?? "";
@@ -471,6 +479,37 @@ export const commands: Record<string, Command> = {
     return { out: nl(out), err };
   },
 };
+
+/** Classic `diff` output: 2c2, 3a4, 5d4 headers with < (old) and > (new) lines. */
+function diffLines(a: string[], b: string[]): string {
+  // Longest common subsequence table, filled from the end.
+  const lcs: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0));
+  for (let i = a.length - 1; i >= 0; i--)
+    for (let j = b.length - 1; j >= 0; j--)
+      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+
+  const out: string[] = [];
+  const range = (from: number, n: number) => (n === 1 ? `${from}` : `${from},${from + n - 1}`);
+  let i = 0, j = 0;
+  while (i < a.length || j < b.length) {
+    if (i < a.length && j < b.length && a[i] === b[j]) { i++; j++; continue; }
+    // A hunk: keep going until the two files line up again.
+    const si = i, sj = j;
+    const removed: string[] = [], added: string[] = [];
+    while (i < a.length || j < b.length) {
+      if (i < a.length && j < b.length && a[i] === b[j]) break;
+      if (j >= b.length || (i < a.length && lcs[i + 1][j] >= lcs[i][j + 1])) removed.push(a[i++]);
+      else added.push(b[j++]);
+    }
+    const head = !removed.length ? `${si}a${range(sj + 1, added.length)}`
+      : !added.length ? `${range(si + 1, removed.length)}d${sj}`
+      : `${range(si + 1, removed.length)}c${range(sj + 1, added.length)}`;
+    out.push(head, ...removed.map((l) => `< ${l}`));
+    if (removed.length && added.length) out.push("---");
+    out.push(...added.map((l) => `> ${l}`));
+  }
+  return nl(out);
+}
 
 /** Where mv/cp should put something: dst itself, or inside dst if dst is a directory. */
 function destPath(ctx: Ctx, name: string, dst: string): string {
