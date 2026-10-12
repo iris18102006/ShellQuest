@@ -79,6 +79,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 48 | Only the repeats | `sort`, `uniq -d` |
 | 49 | First three letters | `cut -c` |
 | 50 | In both lists | `comm -12` |
+| 51 | Who ghosted? | `comm -23` |
 
 ## Supported commands
 
