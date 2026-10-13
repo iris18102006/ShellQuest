@@ -6,5 +6,5 @@ export const level: Level = {
   hint: "echo $HOME",
   files: { "/home/user/readme.txt": 'hello\n' },
   solution: ["echo $HOME"],
-  check: (a) => a.output === "/home/user\n",
+check: (a) => a.command === "echo $HOME" && a.output === "/home/user\n",
 };
