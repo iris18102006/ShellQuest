@@ -91,6 +91,26 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 60 | Count the big ones | `awk` condition, `n++`, `END` |
 | 61 | What changed? | `diff`, `grep` |
 | 62 | Boss: the quarterly report | `awk` `END`, `sales/*.csv`, `>` |
+| 63 | Case-insensitive search | `grep -i` |
+| 64 | Keep the clean lines | `grep -v` |
+| 65 | Count the incidents | `wc -l`, input redirection |
+| 66 | Top three headlines | `head` |
+| 67 | Last two events | `tail` |
+| 68 | Extract the usernames | `cut` |
+| 69 | Unique sorted tags | `sort`, `uniq` |
+| 70 | Normalize the labels | `tr` |
+| 71 | Replace the old port | `sed` |
+| 72 | Show it and save it | `tee` |
+| 73 | Make a quick backup | `cp` |
+| 74 | Rename the draft | `mv` |
+| 75 | Backup only after success | `&&` |
+| 76 | Use the home variable | `$HOME` |
+| 77 | Count without typing the number | `wc -l`, pipes |
+| 78 | Find the average score | `awk`, `END` |
+| 79 | Keep only the repeated IDs | `sort`, `uniq -d` |
+| 80 | Find the unfinished files | `find` |
+| 81 | Compare two sorted lists | `comm -12` |
+| 82 | Build the error report | `grep`, redirection |
 
 ## Supported commands
 
