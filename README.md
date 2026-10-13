@@ -137,7 +137,7 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l63.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l83.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
@@ -172,7 +172,8 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 - [x] `diff`
 - [ ] More commands: `tar`, `sort -k` ranges
 - [x] `awk` sums (`END`)
-- [ ] Levels on variables, `&&`, and shell scripts
+- [x] Levels on variables and `&&`
+- [ ] Levels on shell scripts
 - [ ] Per-command help
 - [ ] Shareable links to a specific level
 
