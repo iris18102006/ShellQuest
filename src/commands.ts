@@ -393,6 +393,76 @@ export const commands: Record<string, Command> = {
     return { out: nl(out) };
   },
 
+  tar(ctx, args) {
+    // Archives are stored as one file: a magic line, then the entries as JSON.
+    interface Entry { path: string; dir: boolean; mode: number; content?: string; exec?: string }
+    const MAGIC = "SQTAR1\n";
+    const flags = new Set<string>();
+    const operands: string[] = [];
+    let archive: string | null = null;
+    let into: string | null = null;
+    let wantF = false;
+    const list = args.length && !args[0].startsWith("-") && /^[a-zA-Z]+$/.test(args[0]) ? ["-" + args[0], ...args.slice(1)] : args;
+    for (let i = 0; i < list.length; i++) {
+      const a = list[i];
+      if (a === "-C") { into = list[++i] ?? null; continue; }
+      if (/^-[a-zA-Z]+$/.test(a)) {
+        for (const c of a.slice(1)) flags.add(c);
+        if (a.endsWith("f")) wantF = true;
+        continue;
+      }
+      if (wantF && archive === null) { archive = a; wantF = false; continue; }
+      operands.push(a);
+    }
+    const modes = ["c", "x", "t"].filter((m) => flags.has(m));
+    if (modes.length !== 1) return fail("tar: You must specify exactly one of the options: -c, -x, -t");
+    if (archive === null) return fail("tar: Refusing to read/write an archive from the terminal; use -f ARCHIVE");
+    const verbose = flags.has("v");
+    const show = (es: Entry[]) => nl(es.map((e) => e.path + (e.dir ? "/" : "")));
+
+    if (flags.has("c")) {
+      if (!operands.length) return fail("tar: Cowardly refusing to create an empty archive");
+      const entries: Entry[] = [];
+      const errs: string[] = [];
+      const walk = (node: Node, path: string) => {
+        if (node.type === "dir") {
+          entries.push({ path, dir: true, mode: node.mode });
+          for (const child of Object.values(node.children).sort((a, b) => a.name.localeCompare(b.name))) walk(child, `${path}/${child.name}`);
+        } else if (!can(node, 4, ctx.user)) errs.push(`tar: ${path}: Cannot open: Permission denied`);
+        else entries.push({ path, dir: false, mode: node.mode, content: node.content, exec: node.exec });
+      };
+      for (const op of operands) {
+        const node = ctx.fs.get(op, ctx.cwd);
+        if (!node) { errs.push(`tar: ${op}: Cannot stat: No such file or directory`); continue; }
+        walk(node, op.replace(/^\/+/, "").replace(/\/+$/, "") || node.name);
+      }
+      if (errs.length) return { out: "", err: errs.join("\n") };
+      if (!ctx.fs.writeFile(archive, MAGIC + JSON.stringify(entries), { cwd: ctx.cwd, owner: ctx.user })) return fail(`tar: ${archive}: Cannot open`);
+      return ok(verbose ? show(entries) : "");
+    }
+
+    const node = ctx.fs.get(archive, ctx.cwd);
+    if (!node) return fail(`tar: ${archive}: Cannot open: No such file or directory`);
+    if (node.type !== "file" || !node.content.startsWith(MAGIC)) return fail("tar: This does not look like a tar archive");
+    if (!can(node, 4, ctx.user)) return fail(`tar: ${archive}: Cannot open: Permission denied`);
+    let entries: Entry[];
+    try { entries = JSON.parse(node.content.slice(MAGIC.length)); }
+    catch { return fail("tar: This does not look like a tar archive"); }
+    if (operands.length) entries = entries.filter((e) => operands.some((o) => e.path === o || e.path.startsWith(o + "/")));
+    if (flags.has("t")) return ok(show(entries));
+
+    const base = into ?? ".";
+    const dest = ctx.fs.get(base, ctx.cwd);
+    if (!dest || dest.type !== "dir") return fail(`tar: ${base}: Cannot open: No such file or directory`);
+    const root = FS.abs(base, ctx.cwd);
+    for (const e of entries) {
+      const full = `${root}/${e.path}`;
+      if (e.dir) ctx.fs.mkdirp(full, "/", ctx.user);
+      else if (!ctx.fs.writeFile(full, e.content ?? "", { mode: e.mode, exec: e.exec, owner: ctx.user })) return fail(`tar: ${e.path}: Cannot open`);
+    }
+    return ok(verbose ? show(entries) : "");
+  },
+
   xargs(ctx, args, stdin) {
     // Turns whitespace-separated words from stdin into arguments for another command.
     const [name = "echo", ...fixed] = args;
