@@ -1,0 +1,41 @@
+// Per-command help: `help grep` or `grep --help`.
+
+export const HELP: Record<string, string> = {
+  ls: "ls [-la] [DIR]\n  List files. -a shows dotfiles, -l shows permissions, owner and size.",
+  cd: "cd [DIR]\n  Change directory. No argument goes home. '..' goes up one level.",
+  pwd: "pwd\n  Print the directory you're in.",
+  cat: "cat FILE...\n  Print files. With several files it glues them together.",
+  echo: "echo TEXT...\n  Print text. Combine with > or >> to write it into a file.",
+  grep: "grep [-ivcnrlh] PATTERN [FILE...]\n  Show lines that match. -i ignore case, -v invert, -c count, -n line numbers,\n  -r search folders, -l file names only, -h hide file names.",
+  head: "head [-n N] [FILE...]\n  First N lines (default 10).",
+  tail: "tail [-n N | -n +N] [FILE...]\n  Last N lines (default 10). -n +N starts at line N.",
+  tac: "tac [FILE...]\n  Print lines in reverse order (cat backwards).",
+  wc: "wc [-lwc] [FILE...]\n  Count lines (-l), words (-w) or characters (-c).",
+  sort: "sort [-nru] [-t SEP] [-k START[,END]] [FILE...]\n  Sort lines. -n numbers, -r reverse, -u unique, -t field separator,\n  -k sort by field(s), e.g. -k2 or -k2,3.",
+  uniq: "uniq [-cdu] [FILE]\n  Collapse repeated neighbouring lines. -c counts, -d only repeats, -u only singles.\n  Sort first, uniq only sees neighbours.",
+  find: "find [DIR] [-name PATTERN] [-type f|d]\n  Search for files by name or type.",
+  chmod: "chmod MODE FILE...\n  Change permissions. MODE is a number (600, 755) or letters (+x, u+rw, go-r).",
+  mkdir: "mkdir [-p] DIR...\n  Make folders. -p creates the whole path and doesn't mind if it exists.",
+  touch: "touch FILE...\n  Create an empty file.",
+  rm: "rm [-rf] FILE...\n  Delete files. -r for folders. There is no trash can in a real shell.",
+  cp: "cp [-r] SOURCE DEST\n  Copy a file. -r copies a whole folder.",
+  mv: "mv SOURCE DEST\n  Move or rename. If DEST is a folder, SOURCE goes inside it.",
+  cut: "cut -d SEP -f N [FILE...]  |  cut -c A-B [FILE...]\n  Pull out a column (-d separator, -f field) or characters (-c).",
+  tr: "tr [-ds] SET1 [SET2]\n  Swap characters (tr a-z A-Z), delete them (-d) or squeeze repeats (-s). Reads stdin only.",
+  sed: "sed [-ni] 's/old/new/[gi]' | 'Nd' | 'N,Md' | '/re/d' | '$d' | 'p'  [FILE...]\n  Edit a stream. -n only prints what you p, -i edits the file in place.",
+  awk: "awk [-F SEP] '[CONDITION] { print $N }' [FILE...]\n  Work on columns. $1 $2 ... $NF are fields, NR is the line number, NF the field count.\n  Totals: awk '{ s += $2 } END { print s }'",
+  tee: "tee [-a] FILE...\n  Show the output AND save it to a file. -a appends.",
+  comm: "comm [-123] FILE1 FILE2\n  Compare two SORTED files. Column 1 only in A, 2 only in B, 3 in both.\n  Hide columns with -1 -2 -3 (comm -12 = what both have).",
+  diff: "diff FILE1 FILE2\n  Show what changed. < is from the first file, > from the second.",
+  xargs: "xargs COMMAND [ARGS...]\n  Turn lines from stdin into arguments for COMMAND, e.g. find ... | xargs rm",
+  whoami: "whoami\n  Print your username.",
+  hint: "hint\n  Show a hint for the current level.",
+  level: "level\n  Show the current level's story again.",
+  share: "share\n  Print a link that opens this exact level.",
+  reset: "reset\n  Put the current level back the way it started.",
+  clear: "clear\n  Clear the screen (or press Ctrl+L).",
+  help: "help [COMMAND]\n  List commands, or explain one of them.",
+};
+
+/** Help text for one command, or null if we don't have any. */
+export const helpFor = (name: string): string | null => (HELP[name] ? `Usage: ${HELP[name]}\n` : null);

@@ -2,10 +2,11 @@ import { FS } from "./vfs";
 import { Shell } from "./shell";
 import { levels } from "./levels";
 import { hashForLevel } from "./link";
+import { helpFor } from "./help";
 
 export interface Turn { out: string; err: string; clear?: boolean; levelChanged?: boolean }
 
-const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-cdu]
+const HELP_TEXT = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +N] tac wc sort [-nru -t -k] uniq [-cdu]
           find [-name -type] chmod mkdir touch rm cp [-r] mv cut [-dfc] tr [-ds] sed [-ni] awk [-F] [END]
           tee [-a] comm [-123] diff xargs whoami
 You can use pipes (|), redirects (> >> <), chaining (&& ;), variables (NAME=value, $NAME), $(command), quotes and * globs.
@@ -35,7 +36,12 @@ export class Game {
     const cmd = line.trim();
     if (!cmd) return { out: "", err: "" };
     if (cmd === "clear") return { out: "", err: "", clear: true };
-    if (cmd === "help") return { out: HELP, err: "" };
+    if (cmd === "help") return { out: HELP_TEXT, err: "" };
+    const ask = /^help\s+(\S+)$/.exec(cmd);
+    if (ask) {
+      const text = helpFor(ask[1]);
+      return text ? { out: text, err: "" } : { out: "", err: `help: no help for '${ask[1]}'. Type 'help' to see the commands.\n` };
+    }
     if (cmd === "hint") return { out: this.finished ? "" : `Hint: ${this.current.hint}\n`, err: "" };
     if (cmd === "level") return { out: this.finished ? "You finished everything.\n" : `${this.current.title}\n${this.current.story}\n`, err: "" };
     if (cmd === "share") return { out: this.finished ? "Nothing to share, you finished everything.\n" : `Link to this level: ${this.link()}\n`, err: "" };

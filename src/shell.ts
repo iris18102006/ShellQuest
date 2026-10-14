@@ -1,6 +1,7 @@
 import { commands, can, type Ctx } from "./commands";
 import { parse, splitChain, ParseError, type Cmd } from "./parser";
 import { FS } from "./vfs";
+import { helpFor } from "./help";
 
 export interface RunResult { out: string; err: string }
 
@@ -90,7 +91,8 @@ export class Shell implements Ctx {
       const name = argv[0];
       let res: { out: string; err?: string };
 
-      if (name.includes("/")) res = this.execFile(name);
+      if (argv.length === 2 && argv[1] === "--help" && commands[name] && helpFor(name)) res = { out: helpFor(name)! };
+      else if (name.includes("/")) res = this.execFile(name);
       else if (commands[name]) res = commands[name](this, argv.slice(1), stdin);
       else res = { out: "", err: `${name}: command not found` };
 
