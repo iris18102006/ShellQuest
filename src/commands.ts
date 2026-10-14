@@ -136,37 +136,60 @@ export const commands: Record<string, Command> = {
   },
 
   sort(ctx, args, stdin) {
+    interface Key { from: number; fromChar: number; to: number | null; toChar: number; flags: Set<string> }
     const flags = new Set<string>();
     const files: string[] = [];
+    const keys: Key[] = [];
     let sep: string | null = null;
-    let key: { from: number; to: number | null } | null = null;
     for (let i = 0; i < args.length; i++) {
       const a = args[i];
       if (a === "-t") sep = args[++i] ?? null;
       else if (a.startsWith("-t") && a.length > 2) sep = a.slice(2);
       else if (a === "-k" || (a.startsWith("-k") && a.length > 2)) {
+        // -k START[.CHAR][,END[.CHAR]][nr]  e.g. -k2  -k2,2n  -k1.2,1.4
         const spec = a.length > 2 ? a.slice(2) : args[++i] ?? "";
-        const m = /^(\d+)(?:,(\d+))?([a-zA-Z]*)$/.exec(spec);
-        if (!m) return fail(`sort: invalid key '${spec}'`);
-        key = { from: parseInt(m[1], 10), to: m[2] ? parseInt(m[2], 10) : null };
-        for (const c of m[3]) flags.add(c);
+        const m = /^(\d+)(?:\.(\d+))?(?:,(\d+)(?:\.(\d+))?)?([a-zA-Z]*)$/.exec(spec);
+        if (!m || m[1] === "0") return fail(`sort: invalid key '${spec}'`);
+        keys.push({
+          from: parseInt(m[1], 10), fromChar: m[2] ? parseInt(m[2], 10) : 1,
+          to: m[3] ? parseInt(m[3], 10) : null, toChar: m[4] ? parseInt(m[4], 10) : 0,
+          flags: new Set(m[5]),
+        });
       } else if (/^-[a-zA-Z]+$/.test(a)) for (const c of a.slice(1)) flags.add(c);
       else files.push(a);
     }
     const { texts, err } = readInputs(ctx, files, stdin, "sort");
     let ls = texts.flatMap((t) => lines(t.text));
-    const keyOf = (l: string): string => {
-      if (!key) return l;
-      const parts = sep !== null ? l.split(sep) : l.trim().split(/\s+/);
-      return parts.slice(key.from - 1, key.to ?? undefined).join(sep ?? " ");
+    const fieldsOf = (l: string) => (sep !== null ? l.split(sep) : l.trim().split(/\s+/));
+    const keyOf = (l: string, k: Key): string => {
+      const parts = fieldsOf(l);
+      const last = k.to ?? parts.length;
+      const picked = parts.slice(k.from - 1, last);
+      if (!picked.length) return "";
+      picked[0] = picked[0].slice(k.fromChar - 1);
+      if (k.to !== null && k.toChar > 0) {
+        const lastIdx = picked.length - 1;
+        // when start and end are the same field, the end offset counts from the field start
+        const offset = lastIdx === 0 ? k.toChar - (k.fromChar - 1) : k.toChar;
+        picked[lastIdx] = picked[lastIdx].slice(0, Math.max(offset, 0));
+      }
+      return picked.join(sep ?? " ");
     };
+    const cmp = (x: string, y: string, numeric: boolean): number =>
+      numeric ? (parseFloat(x) || 0) - (parseFloat(y) || 0) : x < y ? -1 : x > y ? 1 : 0;
+    const keyList: Key[] = keys.length ? keys : [{ from: 1, fromChar: 1, to: null, toChar: 0, flags: new Set() }];
+    const whole = !keys.length;
     ls.sort((a, b) => {
-      const ka = keyOf(a), kb = keyOf(b);
-      let c = flags.has("n") ? (parseFloat(ka) || 0) - (parseFloat(kb) || 0) : ka < kb ? -1 : ka > kb ? 1 : 0;
-      if (c === 0 && key) c = a < b ? -1 : a > b ? 1 : 0;
-      return c;
+      for (const k of keyList) {
+        // a key with its own letters ignores the global ones, like GNU sort
+        const f = k.flags.size ? k.flags : flags;
+        const c = whole ? cmp(a, b, flags.has("n")) : cmp(keyOf(a, k), keyOf(b, k), f.has("n"));
+        if (c !== 0) return (whole ? flags.has("r") : f.has("r")) ? -c : c;
+      }
+      // last resort: compare the whole line, flipped by a global -r
+      const c = cmp(a, b, false);
+      return flags.has("r") ? -c : c;
     });
-    if (flags.has("r")) ls.reverse();
     if (flags.has("u")) ls = ls.filter((l, i) => ls.indexOf(l) === i);
     return { out: nl(ls), err };
   },
