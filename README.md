@@ -186,7 +186,7 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 
 ## Roadmap
 
-- [ ] Tab completion
+- [x] Tab completion (commands and file names, Tab twice to list)
 - [x] `cp`, `mv`, `cut`
 - [x] `tr`, `sed`, `awk`-lite, `tee`, `grep -r`, `cp -r`
 - [x] `diff`
