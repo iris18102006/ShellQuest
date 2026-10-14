@@ -492,3 +492,17 @@ describe("shareable links", () => {
     expect(g.input("share").out).toContain("https://x.dev/#level=5");
   });
 });
+
+describe("per-command help", () => {
+  it("help CMD and CMD --help both explain a command", () => {
+    const g = new Game(0);
+    expect(g.input("help grep").out).toContain("grep [-ivcnrlh]");
+    expect(g.input("help nope").err).toContain("no help for 'nope'");
+    expect(sh().run("sort --help").out).toContain("-k START[,END]");
+  });
+  it("every command in the shell has help text", async () => {
+    const { commands } = await import("../src/commands");
+    const { HELP } = await import("../src/help");
+    for (const name of Object.keys(commands)) expect(HELP[name], name).toBeTruthy();
+  });
+});
