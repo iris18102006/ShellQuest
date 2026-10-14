@@ -558,3 +558,44 @@ describe("sort -k ranges", () => {
   });
   it("rejects a broken key", () => expect(s().run("sort -k0 d.txt").err).toContain("invalid key"));
 });
+
+describe("tar", () => {
+  const files = {
+    "/home/user/proj/a.txt": "alpha\n",
+    "/home/user/proj/sub/b.txt": "beta\n",
+    "/home/user/proj/run.sh": { content: "", exec: "go", mode: 0o755 },
+    "/home/user/solo.txt": "solo\n",
+  };
+  it("creates, lists and extracts an archive", () => {
+    const s = sh(files);
+    expect(s.run("tar -cf out.tar proj solo.txt").err).toBe("");
+    expect(s.run("tar -tf out.tar").out).toBe("proj/\nproj/a.txt\nproj/run.sh\nproj/sub/\nproj/sub/b.txt\nsolo.txt\n");
+    s.run("mkdir here");
+    expect(s.run("tar -xf out.tar -C here").err).toBe("");
+    expect(s.run("cat here/proj/sub/b.txt").out).toBe("beta\n");
+    expect(s.run("cat here/solo.txt").out).toBe("solo\n");
+  });
+  it("keeps permissions and the original files", () => {
+    const s = sh(files);
+    s.run("tar -cf out.tar proj");
+    s.run("rm -r proj");
+    s.run("tar -xf out.tar");
+    expect(s.run("./proj/run.sh").out).toBe("go\n");
+    expect(s.run("ls proj").out).toContain("a.txt");
+  });
+  it("accepts -v, -z, classic flags and member filters", () => {
+    const s = sh(files);
+    expect(s.run("tar -cvf out.tar solo.txt").out).toBe("solo.txt\n");
+    expect(s.run("tar czf z.tgz proj").err).toBe("");
+    expect(s.run("tar xf z.tgz proj/sub").err).toBe("");
+    expect(s.run("tar -tf z.tgz proj/sub").out).toBe("proj/sub/\nproj/sub/b.txt\n");
+  });
+  it("explains its mistakes", () => {
+    const s = sh(files);
+    expect(s.run("tar -cf out.tar nope").err).toContain("Cannot stat");
+    expect(s.run("tar -cf out.tar").err).toContain("empty archive");
+    expect(s.run("tar -tf solo.txt").err).toContain("does not look like a tar archive");
+    expect(s.run("tar -tf missing.tar").err).toContain("No such file");
+    expect(s.run("tar -c proj").err).toContain("-f ARCHIVE");
+  });
+});
