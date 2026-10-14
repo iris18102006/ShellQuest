@@ -204,7 +204,7 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 - [x] Levels on variables and `&&`
 - [x] Levels on shell scripts
 - [x] Per-command help (`help grep` or `grep --help`)
-- [x] Shareable links to a specific level (`#level=12`, or type `share`)
+- [x] Shareable links to a specific level (`#level=12`, or type `share`) 
 
 ## License
 
