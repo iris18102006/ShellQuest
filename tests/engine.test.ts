@@ -535,3 +535,26 @@ describe("tab completion", () => {
     expect(complete("echo $HO", fs, "/home/user").line).toBe("echo $HO");
   });
 });
+
+describe("sort -k ranges", () => {
+  const data = "b 2 x\na 10 y\nc 2 a\na 2 z\n";
+  const s = () => sh({ "/home/user/d.txt": data });
+  it("sorts by several keys, each with its own flags", () => {
+    expect(s().run("sort -k1,1 -k2,2n d.txt").out).toBe("a 2 z\na 10 y\nb 2 x\nc 2 a\n");
+    expect(s().run("sort -k2,2n -k3,3r d.txt").out).toBe("a 2 z\nb 2 x\nc 2 a\na 10 y\n");
+    expect(s().run("sort -k2nr d.txt").out.split("\n")[0]).toBe("a 10 y");
+  });
+  it("end of range limits the key to those fields", () => {
+    const sh2 = sh({ "/home/user/p.csv": "x,1,b\ny,1,a\nz,0,c\n" });
+    // -k2,2 only looks at field 2, so the tie falls back to the whole line (x before y)
+    expect(sh2.run("sort -t, -k2,2 p.csv").out).toBe("z,0,c\nx,1,b\ny,1,a\n");
+    // -k2 runs to the end of the line, so field 3 breaks the tie (a before b)
+    expect(sh2.run("sort -t, -k2 p.csv").out).toBe("z,0,c\ny,1,a\nx,1,b\n");
+  });
+  it("supports character offsets inside a field", () => {
+    const sh2 = sh({ "/home/user/ids.txt": "id-9b\nid-3z\nid-5a\n" });
+    expect(sh2.run("sort -k1.4,1.4 ids.txt").out).toBe("id-3z\nid-5a\nid-9b\n");
+    expect(sh2.run("sort -k1.5 ids.txt").out).toBe("id-5a\nid-9b\nid-3z\n");
+  });
+  it("rejects a broken key", () => expect(s().run("sort -k0 d.txt").err).toContain("invalid key"));
+});
