@@ -475,3 +475,20 @@ describe("levels are solvable", () => {
     });
   });
 });
+
+describe("shareable links", () => {
+  it("parses #level=N into a zero-based index", async () => {
+    const { levelFromHash, hashForLevel } = await import("../src/link");
+    expect(levelFromHash("#level=12", 82)).toBe(11);
+    expect(levelFromHash("level=1", 82)).toBe(0);
+    expect(levelFromHash("#level=0", 82)).toBeNull();
+    expect(levelFromHash("#level=83", 82)).toBeNull();
+    expect(levelFromHash("#nope", 82)).toBeNull();
+    expect(hashForLevel(11)).toBe("#level=12");
+  });
+  it("share prints a link to the current level", () => {
+    const g = new Game(4);
+    g.baseUrl = "https://x.dev/";
+    expect(g.input("share").out).toContain("https://x.dev/#level=5");
+  });
+});
