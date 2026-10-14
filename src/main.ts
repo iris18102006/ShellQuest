@@ -4,6 +4,7 @@ import "@xterm/xterm/css/xterm.css";
 import "./style.css";
 import { Game } from "./game";
 import { levels } from "./levels";
+import { complete } from "./complete";
 import { levelFromHash, hashForLevel } from "./link";
 
 const history_ = window.history;
@@ -67,6 +68,12 @@ function setLine(next: string) {
 
 term.onData((d) => {
   if (d === "\r") return submit();
+  if (d === "\t") {
+    const r = complete(buf, game.shell.fs, game.shell.cwd);
+    if (r.line !== buf) return setLine(r.line);
+    if (r.options.length > 1) { write("\n" + r.options.join("  ") + "\n"); setLine(buf); }
+    return;
+  }
   if (d === "\x7f") { if (buf) { buf = buf.slice(0, -1); term.write("\b \b"); } return; }
   if (d === "\x03") { buf = ""; term.write("^C\r\n"); return prompt(); }
   if (d === "\x0c") { term.clear(); return setLine(buf); }

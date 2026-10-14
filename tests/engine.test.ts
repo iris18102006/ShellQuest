@@ -506,3 +506,32 @@ describe("per-command help", () => {
     for (const name of Object.keys(commands)) expect(HELP[name], name).toBeTruthy();
   });
 });
+
+describe("tab completion", () => {
+  const fs = FS.from({
+    "/home/user/notes.txt": "", "/home/user/notes_old.txt": "", "/home/user/todo.txt": "",
+    "/home/user/.secret": "", "/home/user/docs/readme.md": "",
+  });
+  it("completes command names at the start of a line and after a pipe", async () => {
+    const { complete } = await import("../src/complete");
+    expect(complete("gre", fs, "/home/user").line).toBe("grep ");
+    expect(complete("cat todo.txt | wh", fs, "/home/user").line).toBe("cat todo.txt | whoami ");
+    expect(complete("so", fs, "/home/user").options).toEqual(["sort"]);
+  });
+  it("completes files, adds a slash to folders and stops at the common prefix", async () => {
+    const { complete } = await import("../src/complete");
+    expect(complete("cat to", fs, "/home/user").line).toBe("cat todo.txt ");
+    expect(complete("cd do", fs, "/home/user").line).toBe("cd docs/");
+    expect(complete("cat docs/re", fs, "/home/user").line).toBe("cat docs/readme.md ");
+    const r = complete("cat no", fs, "/home/user");
+    expect(r.line).toBe("cat notes");
+    expect([...r.options].sort()).toEqual(["notes.txt", "notes_old.txt"]);
+  });
+  it("hides dotfiles until you type a dot, and ignores quotes and variables", async () => {
+    const { complete } = await import("../src/complete");
+    expect(complete("cat .s", fs, "/home/user").line).toBe("cat .secret ");
+    expect(complete("cat ", fs, "/home/user").options).not.toContain(".secret");
+    expect(complete('cat "no', fs, "/home/user").line).toBe('cat "no');
+    expect(complete("echo $HO", fs, "/home/user").line).toBe("echo $HO");
+  });
+});
