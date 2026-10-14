@@ -92,7 +92,7 @@ export class Shell implements Ctx {
       let res: { out: string; err?: string };
 
       if (argv.length === 2 && argv[1] === "--help" && commands[name] && helpFor(name)) res = { out: helpFor(name)! };
-      else if (name.includes("/")) res = this.execFile(name);
+      else if (name.includes("/")) res = this.execFile(name, argv.slice(1));
       else if (commands[name]) res = commands[name](this, argv.slice(1), stdin);
       else res = { out: "", err: `${name}: command not found` };
 
@@ -110,12 +110,76 @@ export class Shell implements Ctx {
     return { out, err: errs.map((e) => e + "\n").join("") };
   }
 
-  /** ./script.sh — runs only if the file has the execute bit. */
-  private execFile(path: string): { out: string; err?: string } {
+  /** ./script.sh [args] — runs only if the file has the execute bit. */
+  private execFile(path: string, args: string[]): { out: string; err?: string } {
     const n = this.fs.get(path, this.cwd);
     if (!n) return { out: "", err: `${path}: No such file or directory` };
     if (n.type === "dir") return { out: "", err: `${path}: Is a directory` };
     if (!can(n, 1, this.user)) return { out: "", err: `${path}: Permission denied` };
-    return { out: n.exec ? n.exec.replace(/\n?$/, "\n") : "" };
+    return this.runScript(path, args);
+  }
+
+  private depth = 0;
+
+  /** Runs a script line by line. Arguments become $1, $2 ... and $#. Used by ./file, sh and bash. */
+  runScript(path: string, args: string[]): { out: string; err?: string } {
+    const n = this.fs.get(path, this.cwd);
+    if (!n) return { out: "", err: `${path}: No such file or directory` };
+    if (n.type === "dir") return { out: "", err: `${path}: Is a directory` };
+    if (!can(n, 4, this.user)) return { out: "", err: `${path}: Permission denied` };
+    // Level files can ship a fixed output instead of real script lines.
+    if (n.exec !== undefined) return { out: n.exec ? n.exec.replace(/\n?$/, "\n") : "" };
+    if (this.depth >= 10) return { out: "", err: `${path}: too many nested scripts` };
+
+    const keys = ["#", "@", ...Array.from({ length: 9 }, (_, i) => String(i + 1))];
+    const saved = Object.fromEntries(keys.map((k) => [k, this.vars[k]]));
+    for (let i = 0; i < 9; i++) this.vars[String(i + 1)] = args[i] ?? "";
+    this.vars["#"] = String(args.length);
+    this.vars["@"] = args.join(" ");
+
+    const res = { out: "", err: "" };
+    this.depth++;
+    try { this.execLines(n.content.split("\n"), res); }
+    finally {
+      this.depth--;
+      for (const k of keys) { if (saved[k] === undefined) delete this.vars[k]; else this.vars[k] = saved[k]; }
+    }
+    return { out: res.out, err: res.err.replace(/\n$/, "") || undefined };
+  }
+
+  /** Runs script lines. Understands comments, the #! line and for-loops (one line or several). */
+  private execLines(lines: string[], res: { out: string; err: string }) {
+    const runLine = (text: string) => { const r = this.run(text); res.out += r.out; res.err += r.err; };
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line || line.startsWith("#")) continue;
+
+      const oneLiner = /^for\s+(\w+)\s+in\s+(.*?)\s*;\s*do\s+(.*?)\s*;?\s*done$/.exec(line);
+      const header = /^for\s+(\w+)\s+in\s+(.*?)\s*(;\s*do)?$/.exec(line);
+      if (!oneLiner && !header) { runLine(line); continue; }
+
+      let body: string[];
+      if (oneLiner) body = [oneLiner[3]];
+      else {
+        let j = i + 1;
+        if (!header![3]) { if (lines[j]?.trim() === "do") j++; else { res.err += "shell: syntax error: expected 'do'\n"; return; } }
+        const start = j;
+        let depth = 1;
+        for (; j < lines.length; j++) {
+          const t = lines[j].trim();
+          if (/^for\s/.test(t) && !/done$/.test(t)) depth++;
+          else if (t === "done" && --depth === 0) break;
+        }
+        if (j >= lines.length) { res.err += "shell: syntax error: unexpected end of file (missing 'done')\n"; return; }
+        body = lines.slice(start, j);
+        i = j;
+      }
+      const [, name, list] = (oneLiner ?? header)!;
+      const items = this.run(`echo ${list}`).out.trim().split(/\s+/).filter(Boolean);
+      for (const item of items) {
+        this.vars[name] = item;
+        this.execLines(body, res);
+      }
+    }
   }
 }
