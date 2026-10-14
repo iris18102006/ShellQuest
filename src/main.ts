@@ -4,10 +4,15 @@ import "@xterm/xterm/css/xterm.css";
 import "./style.css";
 import { Game } from "./game";
 import { levels } from "./levels";
+import { levelFromHash, hashForLevel } from "./link";
 
+const history_ = window.history;
 const KEY = "shellquest.level";
 const saved = Number(localStorage.getItem(KEY));
-const game = new Game(Number.isFinite(saved) && saved < levels.length ? saved : 0);
+const fromLink = levelFromHash(location.hash, levels.length);
+const game = new Game(fromLink ?? (Number.isFinite(saved) && saved < levels.length ? saved : 0));
+
+game.baseUrl = location.origin + location.pathname;
 
 const term = new Terminal({
   cursorBlink: true,
@@ -27,6 +32,7 @@ function renderMission() {
   $("level-title").textContent = game.finished ? "All levels complete" : l.title;
   $("level-story").textContent = game.finished ? "Add your own levels in src/levels/." : l.story;
   $("level-hint").hidden = true;
+  history_.replaceState(null, "", game.finished ? location.pathname : hashForLevel(game.level));
 }
 
 const write = (s: string) => term.write(s.replace(/\n/g, "\r\n"));
@@ -67,6 +73,17 @@ term.onData((d) => {
   if (d === "\x1b[A") { if (hIdx > 0) setLine(history[--hIdx]); return; }
   if (d === "\x1b[B") { if (hIdx < history.length) setLine(history[++hIdx] ?? ""); return; }
   if (d >= " " && !d.startsWith("\x1b")) { buf += d; term.write(d); }
+});
+
+window.addEventListener("hashchange", () => {
+  const i = levelFromHash(location.hash, levels.length);
+  if (i === null || i === game.level) return;
+  game.load(i);
+  localStorage.setItem(KEY, String(i));
+  term.clear();
+  write(`Jumped to level ${i + 1}.\n`);
+  renderMission();
+  prompt();
 });
 
 renderMission();

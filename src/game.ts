@@ -1,6 +1,7 @@
 import { FS } from "./vfs";
 import { Shell } from "./shell";
 import { levels } from "./levels";
+import { hashForLevel } from "./link";
 
 export interface Turn { out: string; err: string; clear?: boolean; levelChanged?: boolean }
 
@@ -8,7 +9,7 @@ const HELP = `Commands: ls [-la] cd pwd cat echo grep [-ivcnrlh] head tail [-n +
           find [-name -type] chmod mkdir touch rm cp [-r] mv cut [-dfc] tr [-ds] sed [-ni] awk [-F] [END]
           tee [-a] comm [-123] diff xargs whoami
 You can use pipes (|), redirects (> >> <), chaining (&& ;), variables (NAME=value, $NAME), $(command), quotes and * globs.
-Game: hint  level  reset  clear  help
+Game: hint  level  share  reset  clear  help
 `;
 
 export class Game {
@@ -26,6 +27,10 @@ export class Game {
     this.shell = new Shell(FS.from(l.files), l.cwd ?? "/home/user");
   }
 
+  /** Set by main.ts so `share` can print the real page URL. */
+  baseUrl = "";
+  link() { return `${this.baseUrl}${hashForLevel(this.level)}`; }
+
   input(line: string): Turn {
     const cmd = line.trim();
     if (!cmd) return { out: "", err: "" };
@@ -33,6 +38,7 @@ export class Game {
     if (cmd === "help") return { out: HELP, err: "" };
     if (cmd === "hint") return { out: this.finished ? "" : `Hint: ${this.current.hint}\n`, err: "" };
     if (cmd === "level") return { out: this.finished ? "You finished everything.\n" : `${this.current.title}\n${this.current.story}\n`, err: "" };
+    if (cmd === "share") return { out: this.finished ? "Nothing to share, you finished everything.\n" : `Link to this level: ${this.link()}\n`, err: "" };
     if (cmd === "reset") { this.load(this.level); return { out: "Level reset.\n", err: "", levelChanged: true }; }
     if (this.finished) return { out: "", err: "Nothing left to solve. Type 'reset' to replay the last level.\n" };
 
