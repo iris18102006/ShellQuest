@@ -1,6 +1,6 @@
 import { FS, modeString, type Node } from "./vfs";
 
-export interface Ctx { fs: FS; cwd: string; user: string; setCwd(p: string): void }
+export interface Ctx { fs: FS; cwd: string; user: string; setCwd(p: string): void; runScript?(path: string, args: string[]): Result }
 export interface Result { out: string; err?: string }
 export type Command = (ctx: Ctx, args: string[], stdin: string | null) => Result;
 
@@ -65,7 +65,16 @@ function applyChmod(mode: number, spec: string): number | null {
   return next;
 }
 
+/** sh script.sh [args] and bash script.sh [args]: run a script without needing the execute bit. */
+const runShellScript: Command = (ctx, args) => {
+  const [file, ...rest] = args;
+  if (!file) return fail("usage: sh SCRIPT [ARGS...]");
+  return ctx.runScript ? ctx.runScript(file, rest) : fail("sh: scripts are not available here");
+};
+
 export const commands: Record<string, Command> = {
+  sh: runShellScript,
+  bash: runShellScript,
   pwd: (ctx) => ok(ctx.cwd + "\n"),
   whoami: (ctx) => ok(ctx.user + "\n"),
   echo: (_c, args) => ok(args.join(" ") + "\n"),

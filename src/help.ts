@@ -29,6 +29,8 @@ export const HELP: Record<string, string> = {
   diff: "diff FILE1 FILE2\n  Show what changed. < is from the first file, > from the second.",
   xargs: "xargs COMMAND [ARGS...]\n  Turn lines from stdin into arguments for COMMAND, e.g. find ... | xargs rm",
   tar: "tar -cf ARCHIVE FILE... | tar -tf ARCHIVE | tar -xf ARCHIVE [-C DIR]\n  Bundle files and folders into one archive (-c), list what is inside (-t) or unpack it (-x).\n  -f names the archive, -v shows each file as it goes, -C unpacks into another folder.",
+  sh: "sh SCRIPT [ARGS...]   (also: bash SCRIPT, or ./SCRIPT once it has +x)\n  Run a script line by line. Inside it, $1 $2 are your arguments, $# is how many you gave,\n  # starts a comment and for x in a b c; do ...; done loops work.",
+  bash: "bash SCRIPT [ARGS...]\n  Same as sh: run a script line by line.",
   whoami: "whoami\n  Print your username.",
   hint: "hint\n  Show a hint for the current level.",
   level: "level\n  Show the current level's story again.",

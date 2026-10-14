@@ -599,3 +599,48 @@ describe("tar", () => {
     expect(s.run("tar -c proj").err).toContain("-f ARCHIVE");
   });
 });
+
+describe("shell scripts", () => {
+  const script = (content: string, mode = 0o755) => sh({ "/home/user/s.sh": { content, mode } });
+  it("runs lines, skips comments and the shebang", () => {
+    const s = script("#!/bin/bash\n# say hi\necho one\n\necho two\n");
+    expect(s.run("./s.sh").out).toBe("one\ntwo\n");
+  });
+  it("needs +x for ./ but not for sh and bash", () => {
+    const s = script("echo hi\n", 0o644);
+    expect(s.run("./s.sh").err).toContain("Permission denied");
+    expect(s.run("sh s.sh").out).toBe("hi\n");
+    expect(s.run("bash s.sh").out).toBe("hi\n");
+    s.run("chmod +x s.sh");
+    expect(s.run("./s.sh").out).toBe("hi\n");
+  });
+  it("passes arguments as $1, $2 and $#", () => {
+    const s = script('echo "hello $1, you gave $# args: $@"\n');
+    expect(s.run("./s.sh Iris Leo").out).toBe("hello Iris, you gave 2 args: Iris Leo\n");
+    expect(s.run("./s.sh").out).toBe("hello , you gave 0 args: \n");
+  });
+  it("does not leak arguments into the shell afterwards", () => {
+    const s = script("echo $1\n");
+    s.run("./s.sh secret");
+    expect(s.run("echo [$1]").out).toBe("[$1]\n");
+  });
+  it("supports redirects, pipes and && inside scripts", () => {
+    const s = sh({ "/home/user/s.sh": { content: "cat log.txt | grep ERROR > errors.txt && echo saved\n", mode: 0o755 }, "/home/user/log.txt": "ERROR a\nINFO b\n" });
+    expect(s.run("./s.sh").out).toBe("saved\n");
+    expect(s.run("cat errors.txt").out).toBe("ERROR a\n");
+  });
+  it("runs for-loops, on one line or several", () => {
+    const files = { "/home/user/a.txt": "1\n", "/home/user/b.txt": "2\n" };
+    const one = sh({ ...files, "/home/user/s.sh": { content: "for f in *.txt; do echo file $f; done\n", mode: 0o755 } });
+    expect(one.run("./s.sh").out).toBe("file a.txt\nfile b.txt\n");
+    const many = sh({ ...files, "/home/user/s.sh": { content: "for f in a b\ndo\n  echo $f\n  echo again\ndone\necho end\n", mode: 0o755 } });
+    expect(many.run("./s.sh").out).toBe("a\nagain\nb\nagain\nend\n");
+  });
+  it("reports a missing done and unknown commands", () => {
+    expect(script("for f in a b; do\necho $f\n").run("./s.sh").err).toContain("missing 'done'");
+    expect(script("nope\n").run("./s.sh").err).toContain("command not found");
+  });
+  it("stops runaway recursion", () => {
+    expect(script("./s.sh\n").run("./s.sh").err).toContain("too many nested scripts");
+  });
+});

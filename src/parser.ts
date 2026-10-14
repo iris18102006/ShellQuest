@@ -7,10 +7,14 @@ export class ParseError extends Error {}
 
 type Tok = { t: "word"; v: string; q: boolean } | { t: "op"; v: "|" | ">" | ">>" | "<" };
 
-/** Reads $NAME or ${NAME} at line[i] (which is the `$`). Returns the variable name and where it ends. */
-function readVar(line: string, i: number): { name: string; end: number } | null {
-  const m = /^\$(?:\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*))/.exec(line.slice(i));
-  return m ? { name: m[1] ?? m[2], end: i + m[0].length } : null;
+/** Reads $NAME, ${NAME}, or a script argument ($1, $#, $@) at line[i] (which is the `$`). Returns the variable name and where it ends. */
+function readVar(line: string, i: number, vars: Record<string, string>): { name: string; end: number } | null {
+  const m = /^\$(?:\{([A-Za-z_]\w*)\}|([A-Za-z_]\w*|\d|#|@))/.exec(line.slice(i));
+  if (!m) return null;
+  const name = m[1] ?? m[2];
+  // $1, $# and $@ only mean something inside a script; at the prompt they stay as typed.
+  if (/^[\d#@]$/.test(name) && vars[name] === undefined) return null;
+  return { name, end: i + m[0].length };
 }
 
 /** Reads $( ... ) at line[i] (the `$`). Returns the text inside and where it ends. */
@@ -43,7 +47,7 @@ export function tokenize(line: string, vars?: Record<string, string>, sub?: (cmd
     const c = line[i];
     const isSub = sub && c === "$" && line[i + 1] === "(" && quote !== "'";
     const v = isSub ? readSub(line, i)
-      : vars && c === "$" && quote !== "'" ? readVar(line, i) : null;
+      : vars && c === "$" && quote !== "'" ? readVar(line, i, vars) : null;
     if (v) {
       const val = "inner" in v ? sub!(v.inner).replace(/\n+$/, "") : vars![v.name] ?? "";
       if (quote) cur += val;
