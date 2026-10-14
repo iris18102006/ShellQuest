@@ -23,7 +23,7 @@ FLAG{dotfiles_are_not_invisible}
 *** Level complete! Next up: Level 2: Needle in a log ***
 ```
 
-Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your browser.
+Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works? `help grep` or `grep --help`. Press Tab to complete commands and file names. Type `share` for a link to your current level. Progress is saved in your browser.
 
 ## Levels
 
@@ -111,14 +111,23 @@ Stuck? Type `hint`. Broke something? Type `reset`. Progress is saved in your bro
 | 80 | Find the unfinished files | `find` |
 | 81 | Compare two sorted lists | `comm -12` |
 | 82 | Build the error report | `grep`, redirection |
+| 83 | Two keys, one ranking | `sort -k2,2 -k3,3nr` |
+| 84 | Pack it up | `tar -cf` |
+| 85 | Peek inside | `tar -tf` |
+| 86 | Unpack it somewhere else | `tar -xf -C` |
+| 87 | Your first script | `echo >`, `chmod +x`, `./script` |
+| 88 | Hand it an argument | `./script arg`, `$1` |
+| 89 | No execute bit needed | `sh script` |
+| 90 | Loop it | `for f in *.txt; do ...; done` |
+| 91 | Boss: the nightly backup | scripts, `$1`, `tar`, `&&` |
 
 ## Supported commands
 
-`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `tac` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `comm` `diff` `xargs` `whoami`
+`ls` `cd` `pwd` `cat` `echo` `grep` `head` `tail` `tac` `wc` `sort` `uniq` `find` `chmod` `mkdir` `touch` `rm` `cp` `mv` `cut` `tr` `sed` `awk` `tee` `comm` `diff` `tar` `sh` `bash` `xargs` `whoami`
 
 Plus pipes (`|`), redirects (`>` `>>` `<`), chaining (`&&` runs the next command only if the last one worked, `;` always runs it), variables (`NAME=value`, then `$NAME` or `${NAME}`, plus `$USER` and `$HOME`), quotes, and `*` / `?` globs. Single quotes keep `$` literal, double quotes expand it. `$(command)` is replaced by whatever that command prints.
 
-`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. It also does totals with an `END` block: `{ s += $2 } END { print s }`, counters like `n++`, `NR`, and simple math such as `s / NR`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`. `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns. `diff` shows what changed between two files in the classic format (`2c2`, `3a4`, `5d4` with `<` and `>` lines). `xargs` turns what it receives on stdin into arguments for the command after it.
+`sed` handles `s/a/b/[gi]`, `Nd`, `N,Md`, `/re/d`, `$d`, `p`, `-n` and `-i`. `awk` handles `print` with `$N`, `$NF`, `NR`, `NF`, an optional condition (`$3 > 100`, `/re/`, `$2 ~ /re/`) and `-F`. It also does totals with an `END` block: `{ s += $2 } END { print s }`, counters like `n++`, `NR`, and simple math such as `s / NR`. `grep` has `-r -l -h` on top of `-i -v -c -n`; `sort` has `-t` and `-k`, including ranges (`-k2,2`), several keys (`-k1,1 -k2,2nr`) and character offsets (`-k1.2,1.4`). `tail` understands `-n +N`, and `uniq` has `-c`, `-d` and `-u`. `cut` takes `-d` and `-f` for fields, or `-c` for character positions. `comm` compares two sorted files and takes `-1`, `-2`, `-3` to hide columns. `diff` shows what changed between two files in the classic format (`2c2`, `3a4`, `5d4` with `<` and `>` lines). `tar` bundles files into one archive: `tar -cf a.tar dir`, `tar -tf a.tar` to list it, `tar -xf a.tar -C dest` to unpack (`-v` shows each file). `sh` and `bash` run script files line by line (`./script.sh` needs `+x`): `$1`, `$#` and `$@` are the arguments, `#` starts a comment, and `for f in *.txt; do ...; done` loops work inside scripts. `xargs` turns what it receives on stdin into arguments for the command after it.
 
 ## Run it locally
 
@@ -157,13 +166,13 @@ Pipes work by passing each command's output as the next command's `stdin`, the s
 
 ## Add a level
 
-Create `src/levels/l83.ts` (next number up) and add it to the list in `src/levels/index.ts`:
+Create `src/levels/l92.ts` (next number up) and add it to the list in `src/levels/index.ts`:
 
 ```ts
 import type { Level } from "./types";
 
 export const level: Level = {
-  title: "Level 63: Your title",
+  title: "Level 92: Your title",
   story: "What the player sees in the side panel.",
   hint: "Shown when they type `hint`.",
   files: { "/home/user/a.txt": "file contents" },
@@ -190,10 +199,10 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 - [x] `cp`, `mv`, `cut`
 - [x] `tr`, `sed`, `awk`-lite, `tee`, `grep -r`, `cp -r`
 - [x] `diff`
-- [ ] More commands: `tar`, `sort -k` ranges
+- [x] More commands: `tar`, `sort -k` ranges
 - [x] `awk` sums (`END`)
 - [x] Levels on variables and `&&`
-- [ ] Levels on shell scripts
+- [x] Levels on shell scripts
 - [x] Per-command help (`help grep` or `grep --help`)
 - [x] Shareable links to a specific level (`#level=12`, or type `share`)
 
