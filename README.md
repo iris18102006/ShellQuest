@@ -209,3 +209,4 @@ The Vite `base` is set to `./`, so the build works under any repo name. Run `npm
 ## License
 
 MIT
+
