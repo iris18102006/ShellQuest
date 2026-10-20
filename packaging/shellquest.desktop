@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=ShellQuest
+GenericName=Linux command line trainer
+Comment=Learn the Linux command line by solving puzzles in a browser terminal
+Exec=shellquest
+Icon=shellquest
+Terminal=true
+Categories=Education;Development;
+Keywords=linux;shell;terminal;bash;learn;puzzle;game;
