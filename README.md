@@ -172,6 +172,17 @@ makepkg -si
 
 It adds a `shellquest` command, a desktop entry (it shows up in your app launcher) and an icon.
 
+### The `shellquest` command
+
+```
+shellquest                 # serve on http://127.0.0.1:4173 and open the browser
+shellquest --port 8080     # pick a port (if it is taken, the next free one is used)
+shellquest --no-open       # do not open a browser, just print the URL
+shellquest --host 0.0.0.0  # also reachable from other machines on your network
+```
+
+It serves the files in `dist/` with no extra dependencies, and binds to `127.0.0.1` unless you say otherwise.
+
 ## How it works
 
 The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermjs.org/) only draws the terminal; everything it runs comes from this repo.
