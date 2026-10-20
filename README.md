@@ -148,6 +148,19 @@ npm run build     # production build in dist/
 npm run preview   # serve the production build
 ```
 
+## Install on Arch Linux
+
+ShellQuest runs on Arch (and Arch-based distros like Manjaro, EndeavourOS and CachyOS). It needs `nodejs` 18+ and `npm`. The game itself still runs in your browser; the `shellquest` command just serves it locally and opens it for you.
+
+```bash
+git clone https://github.com/iris18102006/ShellQuest.git
+cd ShellQuest
+./scripts/install-arch.sh
+shellquest
+```
+
+The script installs `nodejs`, `npm` and `make` with `pacman` if they are missing, builds the game and installs it into `~/.local`. If `~/.local/bin` is not in your `PATH`, it tells you what to add. For a system-wide install use `./scripts/install-arch.sh --system`, and to remove it again run `./scripts/install-arch.sh --uninstall`.
+
 ## How it works
 
 The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermjs.org/) only draws the terminal; everything it runs comes from this repo.
