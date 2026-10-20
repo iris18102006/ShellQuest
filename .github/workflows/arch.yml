@@ -1,0 +1,38 @@
+name: Arch Linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  arch:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git nodejs npm make
+
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: |
+          npm ci
+          npm test
+
+      - name: Install with the Arch script
+        run: ./scripts/install-arch.sh --yes
+
+      - name: Launcher serves the game
+        run: |
+          "$HOME/.local/bin/shellquest" --version
+          "$HOME/.local/bin/shellquest" --no-open --port 4173 &
+          sleep 2
+          curl -fsS http://127.0.0.1:4173/ | grep -q ShellQuest
+
+      - name: Uninstall leaves nothing behind
+        run: |
+          ./scripts/install-arch.sh --uninstall
+          test ! -e "$HOME/.local/bin/shellquest"
+          test ! -d "$HOME/.local/lib/shellquest"
