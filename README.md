@@ -161,6 +161,17 @@ shellquest
 
 The script installs `nodejs`, `npm` and `make` with `pacman` if they are missing, builds the game and installs it into `~/.local`. If `~/.local/bin` is not in your `PATH`, it tells you what to add. For a system-wide install use `./scripts/install-arch.sh --system`, and to remove it again run `./scripts/install-arch.sh --uninstall`.
 
+### As a pacman package
+
+A `PKGBUILD` lives in `packaging/arch/`. It builds the latest `main` and installs it under `/usr`, so `pacman` tracks the files and can remove them cleanly:
+
+```bash
+cd packaging/arch
+makepkg -si
+```
+
+It adds a `shellquest` command, a desktop entry (it shows up in your app launcher) and an icon.
+
 ## How it works
 
 The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermjs.org/) only draws the terminal; everything it runs comes from this repo.
