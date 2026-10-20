@@ -1,0 +1,37 @@
+# Maintainer: iris18102006 <irisigjoni3@gmail.com>
+pkgname=shellquest-git
+_name=ShellQuest
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Learn the Linux command line by solving puzzles in a browser terminal'
+arch=('any')
+url='https://github.com/iris18102006/ShellQuest'
+license=('MIT')
+depends=('nodejs>=18')
+makedepends=('git' 'npm')
+provides=('shellquest')
+conflicts=('shellquest')
+source=("git+${url}.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "$_name"
+  git describe --long --tags 2>/dev/null | sed 's/^v//;s/\([^-]*-g\)/r\1/;s/-/./g' \
+    || printf '0.1.0.r%s.g%s' "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "$_name"
+  npm ci --cache "$srcdir/npm-cache"
+  npm run build
+}
+
+check() {
+  cd "$_name"
+  npm test
+}
+
+package() {
+  cd "$_name"
+  make install DESTDIR="$pkgdir" PREFIX=/usr
+}
