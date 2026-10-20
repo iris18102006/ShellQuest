@@ -146,6 +146,7 @@ Other scripts:
 npm test          # engine tests + a full playthrough of every level
 npm run build     # production build in dist/
 npm run preview   # serve the production build
+npm start         # serve dist/ with the shellquest launcher
 ```
 
 ## Install on Arch Linux
