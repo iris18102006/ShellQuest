@@ -183,6 +183,13 @@ shellquest --host 0.0.0.0  # also reachable from other machines on your network
 
 It serves the files in `dist/` with no extra dependencies, and binds to `127.0.0.1` unless you say otherwise.
 
+### Troubleshooting
+
+- **`shellquest: command not found`**: add `~/.local/bin` to your `PATH` (`export PATH="$HOME/.local/bin:$PATH"` in `~/.bashrc` or `~/.zshrc`).
+- **The browser does not open**: install `xdg-utils` (`sudo pacman -S xdg-utils`), or open the printed URL yourself.
+- **`no build found`**: run `make build` in the repo (the install script and the package do this for you).
+- **Node is too old**: `sudo pacman -Syu nodejs npm`. The game needs Node 18 or newer.
+
 ## How it works
 
 The whole shell is written from scratch in TypeScript. [xterm.js](https://xtermjs.org/) only draws the terminal; everything it runs comes from this repo.
