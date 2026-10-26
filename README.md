@@ -126,6 +126,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 95 | Skip the header | `tail -n +N` |
 | 96 | Shout it | `tr a-z A-Z`, `<` |
 | 97 | Strip the spaces | `tr -d` |
+| 98 | Squeeze it | `tr -s` |
 
 ## Supported commands
 
