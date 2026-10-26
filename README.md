@@ -138,6 +138,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 107 | Glue it together | `cat` with several files, `>` |
 | 108 | Add to the end | `>>` |
 | 109 | What do we share | `comm -12` |
+| 110 | Spot the difference | `diff` |
 
 ## Supported commands
 
