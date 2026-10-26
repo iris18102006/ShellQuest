@@ -139,6 +139,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 108 | Add to the end | `>>` |
 | 109 | What do we share | `comm -12` |
 | 110 | Spot the difference | `diff` |
+| 111 | Folders only | `find -type d` |
 
 ## Supported commands
 
