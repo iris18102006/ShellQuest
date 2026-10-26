@@ -142,6 +142,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 111 | Folders only | `find -type d` |
 | 112 | Sweep the temp files | `find`, `xargs rm` |
 | 113 | Look inside the archive | `tar -cf`, `tar -tf`, `&&` |
+| 114 | Say your name | variables, `;` |
 
 ## Supported commands
 
