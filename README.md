@@ -143,6 +143,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 112 | Sweep the temp files | `find`, `xargs rm` |
 | 113 | Look inside the archive | `tar -cf`, `tar -tf`, `&&` |
 | 114 | Say your name | variables, `;` |
+| 115 | Command inside a command | `$(command)` |
 
 ## Supported commands
 
