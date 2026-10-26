@@ -131,6 +131,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 100 | Century: the busiest visitor | `cut`, `sort`, `uniq -c`, `head` |
 | 101 | Cat to dog | `sed s///g` |
 | 102 | Edit in place | `sed -i` |
+| 103 | Drop the comments | `grep -v`, `^` |
 
 ## Supported commands
 
