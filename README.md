@@ -141,6 +141,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 110 | Spot the difference | `diff` |
 | 111 | Folders only | `find -type d` |
 | 112 | Sweep the temp files | `find`, `xargs rm` |
+| 113 | Look inside the archive | `tar -cf`, `tar -tf`, `&&` |
 
 ## Supported commands
 
