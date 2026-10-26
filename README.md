@@ -128,6 +128,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 97 | Strip the spaces | `tr -d` |
 | 98 | Squeeze it | `tr -s` |
 | 99 | Fix the extension | `mv` to rename |
+| 100 | Century: the busiest visitor | `cut`, `sort`, `uniq -c`, `head` |
 
 ## Supported commands
 
