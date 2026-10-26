@@ -129,6 +129,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 98 | Squeeze it | `tr -s` |
 | 99 | Fix the extension | `mv` to rename |
 | 100 | Century: the busiest visitor | `cut`, `sort`, `uniq -c`, `head` |
+| 101 | Cat to dog | `sed s///g` |
 
 ## Supported commands
 
