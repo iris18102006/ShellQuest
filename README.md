@@ -134,6 +134,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 103 | Drop the comments | `grep -v`, `^` |
 | 104 | Add up the costs | `awk` totals |
 | 105 | Each name once | `sort -u` |
+| 106 | Only the repeats | `uniq -d` |
 
 ## Supported commands
 
