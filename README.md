@@ -137,6 +137,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 106 | Only the repeats | `uniq -d` |
 | 107 | Glue it together | `cat` with several files, `>` |
 | 108 | Add to the end | `>>` |
+| 109 | What do we share | `comm -12` |
 
 ## Supported commands
 
