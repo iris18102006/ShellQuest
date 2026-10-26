@@ -140,6 +140,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 109 | What do we share | `comm -12` |
 | 110 | Spot the difference | `diff` |
 | 111 | Folders only | `find -type d` |
+| 112 | Sweep the temp files | `find`, `xargs rm` |
 
 ## Supported commands
 
