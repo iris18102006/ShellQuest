@@ -147,6 +147,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 116 | Greeter script | scripts, `$1` |
 | 117 | How many arguments | scripts, `$#` |
 | 118 | Error census | `for` loops in scripts, `grep -c` |
+| 119 | Who won | `sort -t -k -nr`, `head`, `cut` |
 
 ## Supported commands
 
