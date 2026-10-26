@@ -127,6 +127,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 96 | Shout it | `tr a-z A-Z`, `<` |
 | 97 | Strip the spaces | `tr -d` |
 | 98 | Squeeze it | `tr -s` |
+| 99 | Fix the extension | `mv` to rename |
 
 ## Supported commands
 
