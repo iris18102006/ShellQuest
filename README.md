@@ -132,6 +132,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 101 | Cat to dog | `sed s///g` |
 | 102 | Edit in place | `sed -i` |
 | 103 | Drop the comments | `grep -v`, `^` |
+| 104 | Add up the costs | `awk` totals |
 
 ## Supported commands
 
