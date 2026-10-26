@@ -120,6 +120,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 89 | No execute bit needed | `sh script` |
 | 90 | Loop it | `for f in *.txt; do ...; done` |
 | 91 | Boss: the nightly backup | scripts, `$1`, `tar`, `&&` |
+| 92 | Count the logs | `find -name`, `wc -l`, pipes |
 
 ## Supported commands
 
