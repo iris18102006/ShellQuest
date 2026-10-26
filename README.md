@@ -148,6 +148,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 117 | How many arguments | scripts, `$#` |
 | 118 | Error census | `for` loops in scripts, `grep -c` |
 | 119 | Who won | `sort -t -k -nr`, `head`, `cut` |
+| 120 | Boss: the average | `awk` totals and `NR` |
 
 ## Supported commands
 
