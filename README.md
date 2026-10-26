@@ -146,6 +146,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 115 | Command inside a command | `$(command)` |
 | 116 | Greeter script | scripts, `$1` |
 | 117 | How many arguments | scripts, `$#` |
+| 118 | Error census | `for` loops in scripts, `grep -c` |
 
 ## Supported commands
 
