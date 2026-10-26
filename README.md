@@ -144,6 +144,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 113 | Look inside the archive | `tar -cf`, `tar -tf`, `&&` |
 | 114 | Say your name | variables, `;` |
 | 115 | Command inside a command | `$(command)` |
+| 116 | Greeter script | scripts, `$1` |
 
 ## Supported commands
 
