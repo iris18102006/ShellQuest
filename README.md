@@ -122,6 +122,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 91 | Boss: the nightly backup | scripts, `$1`, `tar`, `&&` |
 | 92 | Count the logs | `find -name`, `wc -l`, pipes |
 | 93 | Count the words | `wc -w` |
+| 94 | Just the ending | `tail -n` |
 
 ## Supported commands
 
