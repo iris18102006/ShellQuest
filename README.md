@@ -133,6 +133,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 102 | Edit in place | `sed -i` |
 | 103 | Drop the comments | `grep -v`, `^` |
 | 104 | Add up the costs | `awk` totals |
+| 105 | Each name once | `sort -u` |
 
 ## Supported commands
 
