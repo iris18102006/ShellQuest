@@ -135,6 +135,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 104 | Add up the costs | `awk` totals |
 | 105 | Each name once | `sort -u` |
 | 106 | Only the repeats | `uniq -d` |
+| 107 | Glue it together | `cat` with several files, `>` |
 
 ## Supported commands
 
