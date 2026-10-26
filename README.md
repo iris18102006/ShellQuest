@@ -121,6 +121,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 90 | Loop it | `for f in *.txt; do ...; done` |
 | 91 | Boss: the nightly backup | scripts, `$1`, `tar`, `&&` |
 | 92 | Count the logs | `find -name`, `wc -l`, pipes |
+| 93 | Count the words | `wc -w` |
 
 ## Supported commands
 
