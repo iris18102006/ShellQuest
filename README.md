@@ -123,6 +123,7 @@ Stuck? Type `hint`. Broke something? Type `reset`. Not sure how a command works?
 | 92 | Count the logs | `find -name`, `wc -l`, pipes |
 | 93 | Count the words | `wc -w` |
 | 94 | Just the ending | `tail -n` |
+| 95 | Skip the header | `tail -n +N` |
 
 ## Supported commands
 
