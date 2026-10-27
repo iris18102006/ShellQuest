@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cipher-chat - a place for friends</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/site.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+  <header id="top">
+    <a id="logo" href="#/"><span class="logo-a">cipher</span><span class="logo-b">chat</span><sup>.com</sup></a>
+    <span id="tagline">a place for friends <small>(and nobody else can read it)</small></span>
+    <form id="search-form" role="search">
+      <input id="search-q" type="search" placeholder="Search for people" maxlength="30" aria-label="Search for people">
+      <button class="xp-btn small" type="submit">Search</button>
+    </form>
+    <span id="whoami"></span>
+    <span id="conn" title="live connection"><i></i></span>
+  </header>
+  <nav id="nav" aria-label="Main"></nav>
+  <div id="banner" aria-hidden="true"><div id="banner-text"></div></div>
+  <main id="view"><p class="loading">Loading…</p></main>
+  <footer id="foot">
+    <p>About &middot; Safety &middot; Privacy &middot; Terms &middot; Invite your friends!</p>
+    <p>&copy; 2026 cipher-chat. Best viewed at 1024&times;768 in a browser that's not Internet Explorer.</p>
+    <p class="foot-note">Messages are locked in your browser. Not even the server can read them.</p>
+  </footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
