@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cipher-chat - a place for friends</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div id="top">
+    <h1><span class="a">cipher</span><span class="b">chat</span><sup>.com</sup></h1>
+    <p>a place for friends. your messages are end-to-end encrypted.</p>
+  </div>
+  <div id="banner"><div>★ the only social network where nobody (not even us) can read your messages ★ customize your page with no code ★ top 8 friends ★ comments ★ bulletins ★</div></div>
+  <p id="error" role="alert"></p>
+  <div id="wrap">
+    <div class="box intro">
+      <h2>Welcome to cipher-chat!</h2>
+      <div class="box-body">
+        <p class="big">A place for <b>friends</b>.</p>
+        <ul>
+          <li><b>Make your page yours.</b> Pick colors, glitter, sparkly cursors and a Top 8. No code needed.</li>
+          <li><b>Chat in private.</b> Messages are locked in your browser, the server only sees scrambled text.</li>
+          <li><b>Know who's around.</b> See who's online, who's typing, and when your message was read.</li>
+          <li><b>Leave comments</b> on your friends' pages and post bulletins.</li>
+        </ul>
+        <p class="counter-line">Pages customized so far: <span class="led" aria-hidden="true"><i>0</i><i>0</i><i>0</i><i>0</i><i>0</i><i>1</i></span></p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="box">
+        <h2>Member Login</h2>
+        <form id="login-form">
+          <label for="login-user">Username:</label>
+          <input id="login-user" name="username" type="text" autocomplete="username">
+          <label for="login-pass">Password:</label>
+          <input id="login-pass" name="password" type="password" autocomplete="current-password">
+          <button type="submit">Login</button>
+        </form>
+      </div>
+      <div class="box">
+        <h2>New here? Sign Up!</h2>
+        <form id="signup-form">
+          <label for="signup-user">Pick a username:</label>
+          <input id="signup-user" name="username" type="text" autocomplete="username">
+          <label for="signup-pass">Pick a password:</label>
+          <input id="signup-pass" name="password" type="password" autocomplete="new-password">
+          <p class="hint">username: 3-20 letters, numbers or _<br>password: at least 8 characters</p>
+          <button type="submit">Sign Up!</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="login.js"></script>
+</body>
+</html>

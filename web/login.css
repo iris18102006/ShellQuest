@@ -1,0 +1,98 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #8fb3e3 radial-gradient(rgba(255, 255, 255, 0.35) 1.5px, transparent 2px) 0 0 / 14px 14px;
+  font-family: Verdana, Tahoma, sans-serif;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #000;
+}
+
+#top {
+  padding: 10px 20px;
+  color: #fff;
+  background: linear-gradient(#3b78cf, #17407f 60%, #12346a);
+  border-bottom: 3px solid #ff9933;
+}
+
+#top h1 {
+  margin: 0;
+  font: italic bold 34px/1.1 "Trebuchet MS", Verdana, sans-serif;
+  letter-spacing: -1px;
+  text-shadow: 2px 2px #0a1f40;
+}
+#top h1 .b { color: #ff9933; }
+#top h1 sup { font-size: 11px; font-style: normal; letter-spacing: 0; color: #cfe0ff; text-shadow: none; }
+#top p { margin: 2px 0 0; font-size: 11px; color: #dbe8ff; }
+
+#banner { overflow: hidden; white-space: nowrap; background: #0c2650; border-bottom: 1px solid #000; }
+#banner div { display: inline-block; padding: 3px 0 3px 100%; color: #ffe28a; font: bold 11px "Courier New", monospace; animation: scroll 30s linear infinite; }
+@keyframes scroll { to { transform: translateX(-100%); } }
+
+#error { min-height: 1.4em; margin: 12px 0 0; text-align: center; font-weight: bold; color: #c00; }
+
+#wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  max-width: 900px;
+  margin: 10px auto 30px;
+  padding: 0 10px;
+  align-items: flex-start;
+}
+
+.col { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 16px; }
+.intro { flex: 1.2; min-width: 280px; }
+
+.box { background: #fff; border: 1px solid #17407f; }
+.col .box { width: 100%; }
+
+.box h2 {
+  margin: 0;
+  padding: 5px 8px;
+  font-size: 13px;
+  color: #fff;
+  background: linear-gradient(#ff9933, #e0701a);
+  text-shadow: 1px 1px #8a4300;
+}
+
+.box-body { padding: 10px 14px; }
+.big { font-size: 18px; margin: 4px 0 8px; color: #17407f; }
+.intro ul { padding-left: 18px; }
+.intro li { margin: 7px 0; }
+.counter-line { margin-bottom: 0; font-size: 11px; color: #555; }
+.led { display: inline-flex; gap: 1px; vertical-align: middle; }
+.led i { padding: 0 3px; font: normal bold 12px "Courier New", monospace; color: #39ff14; background: #000; border: 1px inset #444; }
+
+.box form { padding: 12px; }
+
+label { display: block; margin: 8px 0 2px; font-weight: bold; color: #17407f; }
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid #7f9db9;
+  font: inherit;
+}
+
+button {
+  margin-top: 12px;
+  padding: 4px 14px;
+  font: bold 12px Verdana, Tahoma, sans-serif;
+  color: #17407f;
+  background: linear-gradient(#fff, #cfdcf0);
+  border: 1px solid #17407f;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+button:hover { background: linear-gradient(#fff, #ffd9b0); }
+:focus-visible { outline: 2px dotted #e0701a; outline-offset: 2px; }
+
+.hint { margin: 6px 0 0; font-size: 10px; color: #666; }
+
+@media (prefers-reduced-motion: reduce) {
+  #banner div { animation: none; padding-left: 8px; }
+}
