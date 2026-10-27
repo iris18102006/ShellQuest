@@ -1,9 +1,9 @@
-node_modules
-dist
-
-# makepkg output
-packaging/arch/src/
-packaging/arch/pkg/
-packaging/arch/ShellQuest/
-*.pkg.tar.zst
-*.log
+.venv/
+__pycache__/
+*.key
+*.pem
+.env
+backend/cipher.db
+backend/cipher.db-journal
+cookies.txt
+node_modules/
